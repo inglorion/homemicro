@@ -1,0 +1,20 @@
+
+ /-------------------------\
+ \    0  .   B+  G+  R+    /
+  \    S0  -   B0  G0  R0 /
+   \  .  V   H   .   .   /
+    \-------------------/
+
+Legend:
+-:  No pin, or unconnected
+.:  Unconnected pin
+0:  Ground
+B+: Blue signal
+B0: Blue ground
+G+: Green signal
+G0: Green ground
+H:  Hsync signal
+R+: Red signal
+R0: Red ground
+S0: Sync ground
+V:  Vsync signal
