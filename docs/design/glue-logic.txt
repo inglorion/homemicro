@@ -1,0 +1,79 @@
+* Summary
+
+ : RAM /ce: and a15 a14
+ : ROM /ce: nand a15 a14 a13
+ : /ioe1: a13
+ : /ioe2: and clk3 a0
+ : ioe3: same as RAM /ce
+
+This gives us 48KB RAM, 8KB ROM, and 8KB of I/O space.
+
+* Description
+
+The master clock signal, clk14, is divided by a '161 to give clk7,
+clk3, and clk1. The /mr of the '161 is held low by the video
+controller until the first active video. A scan line takes 456 clk14
+cycles, which is divisible by 4, so that clk7, clk3, and clk1 stay
+synchronized with the video signal.
+
+Loading pixel data is controlled by a '139. /1e is controlled by
+clk1, a0 is the and of video active and clk3, and a2 is clk7.
+
+Result: Pixel data is loaded every 8 cycles of clk14 while video
+active is high.
+
+The CPU's phi2 and be are connected to clk1. This means that the CPU
+will only drive a0..a15, rwb, and d0..d7 (when writing) during the
+high part of clk1/phi2.
+
+Result: While clk1 is low, the CPU does not drive the address and data
+buses, so that the video controller can load pixel data from RAM.
+
+The RAM's ce2 is pulled high. As a result, RAM is selected by /ce only.
+
+RAM's /ce is controlled by the AND of a15 and a14. This means RAM is
+selected for all addresses below $c000.
+
+ROM's /ce is controlled by the NAND of a15, a14, and a13. This means ROM
+is selected for all addresses starting at $e000.
+
+rwb is inverted by a '10 (2 inputs pulled high) with a pull-up
+resistor. This means the output of the '10 is low when rwb is high or
+high-z, and high only when rwb is low. This signal is anded with clk1
+using an '08. The resulting signal is high when clk1 is high and rwb
+is low. This is fed into the ROM's /oe and the RAM's /oe.
+
+Result: When the CPU has control of the bus and wants to write, output
+is disabled for both ROM and RAM. In all other cases, output is
+enabled for both ROM and RAM.
+
+The result of rwb, clk1 and a15 together is that always exactly one of
+CPU, RAM, or ROM is driving the data bus.
+
+ROM's /we is pulled high. This means ROM can never be written to.
+
+RAM's /we is the NAND ('10) of clk3, clk1, and the inverted rwb (from
+the '10; the same signal is also used in the computation of /oe).
+
+Result: RAM's /we only goes low when the CPU is writing, has control
+of the bus, and we're in the last half of the period during which phi2
+is high. The last constraint provides time for RAM and ROM to stop
+driving the data bus, and for the CPU to put data on the bus.
+
+I/O is selected using a '138. The IC has 8 outputs which are normally high.
+At most one at a time can be driven low. This requires e1# and e2# to be
+low, e3 to be high, and a0..a2 to select the line to be driven low. We wire
+
+We wire e1# to a13 and e3 to RAM's ce#. This causes I/O to be selected
+when a13 is low and RAM is deselected, corresponding to addresses $c000
+through $dfff.
+
+The '138's a0 through a2 are wired to the CPU's a1 through a3. This means
+the addresses that will activate (drive low) the outputs of the '138s are
+addresses 0 through 15. Addresses 0 and 1 both activate the first output,
+addresses 2 and 3 activate the second output, and so on.
+
+e2# is wired to the AND of clk3 and a0. This means that, for example, if
+the CPU selects address $d003, the corresponding I/O line goes low initially,
+but then goes high when clk3 goes high. This is used to generate a write
+pulse for IC's like the '574.

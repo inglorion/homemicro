@@ -1,0 +1,52 @@
+Home Micro 1000
+---------------
+
+The Home Micro 1000 video circuitry is greatly simplified from that of
+the Home Micro 2000 and provides only a single video mode: 320x200
+pixels in a single color. As with the Home Micro 2000, the video is
+output as a VGA signal.
+
+
+Home Micro 2000
+---------------
+
+The Home Micro 2000 was designed to generate a VGA signal with up to
+16 colors. VGA was chosen because it is relatively easy to generate,
+easy to add color to, and can be displayed on modern displays either
+natively or with commonly availabe adapters.
+
+The video the Home Micro 2000 generates consists of 320 pixels
+horizontally and 200 vertically, for a total of 64,000 pixels. To
+allow every pixel to be individually set to one of the 16 colors would
+require 4 bits per pixel, for a total of 32,000 bytes, just under half
+the addressable memory. Instead of sacrificing that much address
+space, the Home Micro offers a number of different video modes that
+offer more compact, albeit also less flexible encodings:
+
+320x200 graphics with 2 screen colors
+320x200 2-color graphics with 8x8 color tiles
+160x200 4-color graphics with 4 screen colors
+160x200 4-color graphics with 8x8 color tiles (2 tile colors, 2 screen colors)
+320x200 text mode with 2 screen colors
+320x200 2-color text mode with 8x8 color tiles
+160x200 4-color text mode with 4 screen colors
+160x200 4-color text mode with 8x8 color tiles (2 tile colors, 2 screen colors)
+
+The bus arbiter provides 4 cycles. One of these is used by the CPU,
+leaving 3 for video.
+
+In character mode, the first cycle is used to fetch the character.
+This uses bits 13..3 from the video address generator as bits 10..0 of
+the video address (providing for 1K addresses).
+
+When color tiles are enabled, the second cycle is used to fetch the colors.
+This uses bits 13..3 as 10..0, again providing for 1K addresses.
+
+In color character mode, the second cycle is used to fetch the first half
+of the character data.
+
+The third cycle is used to fetch pixel data. In graphics mode, this
+uses bits 13..0. In character mode, this uses the text from cycle 1 as bits
+10..3 and bits 2..0 of the video address as bits 2..0.
+
+Bit 15 is always 1, and bit 14 is equal to the alternate graphics bit.
