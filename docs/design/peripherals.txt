@@ -1,0 +1,102 @@
+Use SPI bus to communicate with peripherals.
+
+Parts:
+1x 8-bit flip flop to select device.
+1x 3:8 demux to drive /cs lines.
+1x parallel to serial shift register for MOSI (74HC166 0.48)
+1x serial to parallel shift register for MISO (74AHCT595 0.58)
+1x clock divider (74HC161?)
+1x clock inverter
+1x down counter (can combine with clock divider?)
+
+CPU sets data
+RWB goes low
+SCK goes low
+data from CPU in shift-out register
+SCK goes high
+bit 7 transfered
+SCK goes low
+bits shifted
+SCK goes high
+bit 6 transfered
+SCK goes low
+bits shifted
+SCK goes high
+bit 5 transfered
+SCK goes low
+bits shifted
+SCK goes high
+bit 4 transfered
+SCK goes low
+bits shifted
+SCK goes high
+bit 3 transfered
+SCK goes low
+bits shifted
+SCK goes high
+bit 2 transfered
+SCK goes low
+bits shifted
+SCK goes high
+bit 1 transfered
+SCK goes low
+bits shifted
+SCK goes high
+bit 0 transfered
+data from slave in shift-in register
+
+  7    6    5    4    3    2    1    0
+\_/- \_/- \_/- \_/- \_/- \_/- \_/- \_/-
+
+
+Or
+--
+
+One AVR (ATtiny48/88?)
+8 data bits, normally input.
+/active bit.
+/write bit.
+
+If /write is low, read data port and write SPDR.
+Else, if /active is low, set port to output and set value from SPI,
+then wait until active goes high or /write goes low.
+
+__start:
+ldi r17, <all read>
+out DDRy, r17
+ldi r17, <all read>
+out DDRx, r17
+; initialize SPI
+
+go_idle:
+ldi r17, <all read>
+out DDRx, r17
+ldi r17, <all write>
+rjmp wait_for_event
+
+wait_for_spif:
+; wait for spif
+
+wait_for_event:
+in r16, PORTy         ; cycle 2
+sbrs r16, WRITE_BIT   ; cycle 3
+rjmp handle_write     ; cycle 4
+sbrs r16, ACTIVE_BIT  ; cycle 5
+rjmp handle_read      ; cycle 6
+nop                   ; cycle 7
+rjmp wait_for_event   ; cycle 8 / cycle 0
+
+handle_write:
+in r16, PORTx         ; cycle 6
+out SPDR, r16         ; cycle 7
+rjmp wait_for_spif    ; cycle 8
+
+handle_read:
+in r16, SPDR          ; cycle 8
+out PORTx, r16        ; cycle 9
+out DDRx, r17         ; cycle 10
+handle_read_wait:
+in r16, PORTy
+sbrs ACTIVE_BIT
+rjmp handle_read_wait
+rjmp go_idle
