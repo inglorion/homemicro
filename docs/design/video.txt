@@ -3,8 +3,9 @@ Home Micro 1000
 
 The Home Micro 1000 video circuitry is greatly simplified from that of
 the Home Micro 2000 and provides only a single video mode: 320x200
-pixels in a single color. As with the Home Micro 2000, the video is
-output as a VGA signal.
+pixels in a single color. This corresponds to mode 0 of the Home Micro
+2000. As with the Home Micro 2000, the video is output as a VGA
+signal.
 
 
 Home Micro 2000
@@ -21,16 +22,32 @@ allow every pixel to be individually set to one of the 16 colors would
 require 4 bits per pixel, for a total of 32,000 bytes, just under half
 the addressable memory. Instead of sacrificing that much address
 space, the Home Micro offers a number of different video modes that
-offer more compact, albeit also less flexible encodings:
+offer more compact, albeit also less flexible encodings.
 
-320x200 graphics with 2 screen colors
-320x200 2-color graphics with 8x8 color tiles
-160x200 4-color graphics with 4 screen colors
-160x200 4-color graphics with 8x8 color tiles (2 tile colors, 2 screen colors)
-320x200 text mode with 2 screen colors
-320x200 2-color text mode with 8x8 color tiles
-160x200 4-color text mode with 4 screen colors
-160x200 4-color text mode with 8x8 color tiles (2 tile colors, 2 screen colors)
+Mode    Bit/Char  Pixels  Colors  Tiles
+0       bitmap    320x200 2       no
+1       bitmap    160x200 4       no
+2       bitmap    320x200 2       yes
+3       bitmap    160x200 4       yes
+4       character 320x200 2       no
+5       character 160x200 4       no
+6       character 320x200 2       yes
+7       character 160x200 4       yes
+-
+9       character 160x200 16      no
+
+In other words:
+bit 0: extra color mode (0: disabled, 1: enabled)
+bit 1: color tiles (0: disabled, 1: enabled)
+bits 2 and 3: 00 bitmap mode, 01 character mode, 10 color character mode
+
+if bit 7 is 1, it adds $4000 to video addresses.
+the meaning of bits 5 and 6 is as follows:
+00: use character set in ROM
+01: use character set at $2800
+10: use character set at $6800
+
+bit 4 is reserved and must be set to 0.
 
 The bus arbiter provides 4 cycles. One of these is used by the CPU,
 leaving 3 for video.
