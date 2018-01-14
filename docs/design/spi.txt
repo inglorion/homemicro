@@ -1,0 +1,171 @@
+Need some way to control which device is being addressed. A single
+8-bit flip-flop gives 8 addressable devices. That's good enough for a
+simple version.
+
+Need some way to control the clock like and MOSI line. This could be
+done with a flip-flop with at least 2 bits.
+
+Need some way to read the MISO line. If we're lucky, we can do this
+with another bit on the flip-flop we use for MOSI.
+
+Minimal: 8-bit flip-flop
+
+At a minimum, we could use a single flip-flop for everything; 5
+address lines, MISO, MOSI, and SCLK. MISO would be set every time the
+flip-flop is written to, meaning its value is only valid while SCLK is
+high. With 5 address lines, we can make 64 addresses, although we can
+make only 5 without using a decoder.
+
+Medium: 8-bit flip-flop + 8-bit shift register
+
+A step up would be to use an 8-bit shift register for the value. We
+can use an 8-bit flip-flop for the address and SCLK. This means the
+value need be written and read only once every 8 bits, substantially
+simplifying the work the CPU has to do. It also gives us 7 bits for
+the address, allowing up to 128 addresses, or 7 without a decoder.
+
+Instead of using a bit of the flip flop to hold the value of SCLK,
+we can use writes to the bit to drive low a line that is otherwise
+pulled high. This means the bit will go low and return to high once
+for each write cycle, completing a full cycle in one write cycle
+instead of 2.
+
+Offload: 8-bit flip-flop, 8-bit shift register, counter
+
+A further step up would be to use a counter to automatically toggle
+SCLK. We can reset this counter while the data register is being
+written to, and then automatically shift the bits without needing the
+CPU.
+
+Cycles:
+
+Read memory: LDX abs, 4 cycles (3 if zp).
+Toggle bit in accumulator: EOR imm, 2 cycles.
+Write memory: STA abs, 4 cycles (3 if zp).
+
+Minimal variant: Even just toggling SCLK costs 12 cycles per bit,
+which puts us in the low range for MMC. If we want to transfer data,
+too, it's going to go up. We can't drive an MMC card with the minimal
+interface.
+
+Medium variant: 6 * 2 = 12 cycles per bit, 130kHz without the clock
+circuitry. With clock circuitry, 6 cycles per bit, 260kHz.
+
+Offload variant: MMC wants 100-400kHz, so 4-15 cycles per bit.
+If going with 3.58MHz-derived, 5-17 cycles per bit.
+To accommodate both, probably want to go with 8 cycles per bit.
+
+For both medium and offload variants, we will want to read from memory
+and write to memory. Let's say we read the shift register into A (LDA
+abs; 4), then store that at an address (STA (ind,x); 6), increment the
+address by one (INX; 2), read from an address (LDA (ind),Y; 5),
+increment that address (INY; 2), and write the value to the shift
+register (STA abs; 4). That's a total of 23 cycles. That can certainly
+be improved (it's basically memcpy), but it's less time that we need
+for SPI, and you may want to do other things (e.g. compare the byte
+you received), so we'll use it as a rough guide.
+
+For medium variant, that gives us 23 + 8 * 12 = 23 + 96 = 119 cycles
+per byte. At 1.56MHz, that is about 13KB/s. With clock circuitry, we
+get 23 + 8 * 6 = 71 cycles per byte. At 1.56MHz, that is about 22KB/s.
+
+For offload variant, we overlap the cycles of the transfer with the
+cycles that move data in the CPU, giving max(23, 64) = 64 cycles,
+or about 24KB/s.
+
+Based on this, I'm inclined to go with the medium variant with extra
+clock circuitry. Almost as many address bits as the offload variant (7
+vs. 8), and gives us 22KB/s, which is fine for MMC cards and modems
+and will fill all RAM in about 3 seconds. The biggest downside
+compared to the offload variant is that the CPU is tied up for 71
+cycles instead of 23.
+
+
+Wiring
+
+Using '166 to send data:
+
+To shift, we need to set the /ce low and pulse cp high. We need to do
+this when /io5 is low, /we is low, and d7 is low.
+
+To load, we need to set /ce and /pe low and pulse cp high. We need to
+do this when /io6 is low and /we is low.
+
+/pe = or /we /io6
+/ce = and (or d7 /io5 /we)
+
+Note: We use /we rather than /w, because /w has a pull down resistor
+that causes it to be low when the CPU is not driving it. /we is only
+low when the CPU is actively writing.
+
+Wire cp to clk3. This will cause the rising edge to occur during the
+time when /ce and /pe can be low.
+
+Wire q7 to the MMC's DI (also known as MOSI).
+
+Using '299 to receive data:
+
+We need to shift data in on rising sclk. This is provided by q7 of
+the SPI control register.
+
+We need to output data only when /io6 is low and the /oe bus is
+low. Conveniently, the '299 provides /oe1 and /oe2 to accomplish
+this. Connect one to /io6 and the other to the /oe bus.
+
+We will be shifting data from dsr->q0, q0->q1, ..., q6->q7. To do
+this, s0 needs to be pulled high and s1 pulled low. dsl should be
+irrelevant. I pulled it high (TODO: easier to pull it low, since it's
+next to s1?). io0 through io7 connect to the like-numbered lines of
+the data bus. q0 and q7 are outputs and can be left unconnected.
+
+Wire dsr to the MMC's DO (also known as MISO).
+
+
+Using '299 for to send and receive (I don't think this works):
+
+To shift, we need to set s0 high and s1 low (or the other way around)
+and pulse cp high. We use SPI mode 0, which means we should latch
+incoming data when sclk goes high and shift when sclk goes
+low. Since the '299 shifts and captures incoming serial data at the
+same time, we do this when sclk goes low. This means outgoing data
+is stable when sclk goes high as required by SPI. Since the '299 has
+negative hold time for the serial inputs, this will also capture the
+MISO data as it was before sclk went low.
+
+Sclk is bit 7 of the SPI control register. Its going low is controlled
+by io5# low, w# low, and d7 low, and occurs at the rising edge of
+clk3. If we feed clk3 into cp, that will synchronize the shifts with
+the sclk transitions.
+
+To load data, we need to set s0 and s1 high and pulse cp high.
+The inputs for loading data are io6# low and w# low. We can still use
+clk3 to drive cp.
+
+When neither loading nor shifting, we need to either make sure s0 and
+s1 are both low, or that cp does not transition from low to
+high. Since we tied cp to clk3, we need to drive s0 and s1.
+
+s0 = nor io6# w#
+s1 = or s0 (nor io5# w# d7)
+
+io5# io6# w# d7 s0 s1 action
+0    1    0  0  0  1  shift
+0    1    0  1  0  0  hold
+0    1    1  0  0  0  hold
+0    1    1  1  0  0  hold
+1    0    0  0  1  1  load
+1    0    0  1  1  1  load
+1    0    1  0  0  0  hold
+1    0    1  1  0  0  hold
+1    1    x  x  0  0  hold
+
+(io5# and io6# cannot both be low at the same time, because they are
+outputs of an '138.)
+
+Since we're using s0 low, s1 high for shifting, we will be shifting
+dsl->q7, q7->q6, ... q1->q0. So q0 will contain the bits we are
+sending to the slaves, and dsl the bits we receive from them.
+
+To read data, we need to set oe1# and oe2# low. When not reading data,
+at least one of those needs to be high. The inputs for a read are io6#
+low, oe# low. We can just feed those into oe1# and oe2#, respectively.
