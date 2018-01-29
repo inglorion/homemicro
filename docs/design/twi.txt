@@ -1,0 +1,41 @@
+Two-wire interface.
+
+The Home Micro uses a two-wire interface to communicate with
+cartridges. The same bus can also be used to communicate with
+peripherals. The protocol used on this bus is a limited form of I2C,
+where:
+
+1. Arbitrage is not supported. The computer is always bus master.
+
+2. Clock stretching is not supported. Only the computer can drive the
+SCL line.
+
+In general, a device that supports I2C fast mode, does not attempt to
+become bus master, and does not stretch the clock should be compatible
+with the Home Micro's TWI.
+
+The protocol has the following timing and electrical specifications.
+These are believed to be compatible with I2C at 400kHz fast mode. In
+some cases, the Home Micro TWI protocol provides for longer timings
+than I2C requires, allowing devices more time to respond.
+
+Symbol    Parameter                      Min   Max   Unit
+V_L       Low input voltage              -0.5  1.5   V
+V_H       High input voltage             3.5   5.5   V
+R_PU      Pull-up resistor value         950   1050  ohm
+t_HD;STA  Start hold time                8.0*  -     us
+t_LOW     Low period of SCL              1.3   -     us
+t_HIGH    High period of SCL             0.6   -     us
+t_TH;DAT  Data hold time                 0     -     us
+t_SU;DAT  Data setup time                100   -     ns
+t_r       Rise time (for SCL and SDA)
+            @ capacitance <= 250pF       -     300   ns
+            @ capacitance <= 400pF       -     500*  ns
+t_f       Fall time (for SCL and SDA)    -     300   ns
+t_SU;STO  Setup time for stop condition  4.0*  -     us
+t_BUF     Time between stop and start    4.7*  -     us
+C_b       Bus capacitance                -     400   pF
+T_VD;DAT  Data valid time                -     0.9   us
+T_VD;ACK  Data valid acknowledge time    -     0.9   us
+
+* Value is longer than specified for 400kHz I2C.

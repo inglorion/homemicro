@@ -1,3 +1,10 @@
+This document contains some design notes on how the Home Micro could
+support SPI (Serial Peripheral Interface). This was implemented in a
+prototype, but did not make it into the final design. The notes here
+may or may not still be compatible with the current design, but are
+provided for the curious and may serve as a starting point if SPI is
+ever added in the future.
+
 Need some way to control which device is being addressed. A single
 8-bit flip-flop gives 8 addressable devices. That's good enough for a
 simple version.
