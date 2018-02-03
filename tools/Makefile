@@ -1,5 +1,7 @@
 GPIO = gpio.o
 TARGETS = $(GPIO) \
+	cartridge/readcart \
+	cartridge/writecart \
 	gpios_low \
 	memory/readmem memory/writemem \
 	memory/writerom
@@ -12,6 +14,10 @@ distclean :
 	-rm $(TARGETS)
 
 .PHONY : all clean distclean
+
+cartridge/readcart : $(GPIO) cartridge/readcart.c
+
+cartridge/writecart : $(GPIO) cartridge/writecart.c
 
 gpio.o : gpio.c gpio.h
 
