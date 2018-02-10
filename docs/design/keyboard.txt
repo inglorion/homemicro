@@ -1,0 +1,159 @@
+#+TITLE: Keyboard Design
+
+* Layout
+
+ :  ESC
+ :  
+ :   `   !   "   #   $   %   &   '   (   )   _   {   }
+ :   @   1   2   3   4   5   6   7   8   9   0   [   ]  BS
+ :   
+ :     Q   W   E   R   T   Y   U   I   O   P   :   ;   |
+ : TAB q   w   e   r   t   y   u   i   o   p   *   +   \
+ : 
+ :       A   S   D   F   G   H   J   K   L   =   ~
+ :  CTL  a   s   d   f   g   h   j   k   l   -   ^   RET
+ :  
+ :         Z   X   C   V   B   N   M   <   >   ?
+ :   SH    z   x   c   v   b   n   m   ,   .   /   SH     UP
+ : 
+ : 
+ :                      SP          CTL               LE  DN  RI
+ : 
+
+** Comparison
+
+By comparison, here are some other home computer keyboard layouts.
+
+*** Atari (57 keys)
+
+ :      !   "   #   $   %   &   '   @   (   )  CLR INS DEL
+ : ESC  1   2   3   4   5   6   7   8   9   0   <   >  BS  BRK
+ : CLRSET Q   W   E   R   T   Y   U   I   O   P   _   |
+ :   TAB  q   w   e   r   t   y   u   i   o   p   -   =   RET
+ :          A   S   D   F   G   H   J   K   L   :   \   ^  CPS
+ :     CTL  a   s   d   f   g   h   j   k   l   ;   +   *  LWR
+ :            Z   X   C   V   B   N   M   [   ]   ?     
+ :     SH     z   x   c   v   b   n   m   ,   .   / ATR SH
+ :                         SP
+
+*** Commodore 64 (66 keys)
+
+ :      !   "   #   $   %   &   '   (   )                  CLR INS    F1
+ :  BS  1   2   3   4   5   6   7   8   9   0   +   -  GBP HME DEL    F2
+ :        Q   W   E   R   T   Y   U   I   O   P                       F3
+ :   CTL  q   w   e   r   t   y   u   i   o   p   @   *   ^  REST     F4
+ : RUN      A   S   D   F   G   H   J   K   L   (   )                 F5
+ : STP SHL  a   s   d   f   g   h   j   k   l   ;   :   =  RET        F6
+ :            Z   X   C   V   B   N   M   <   >   ?                   F7
+ : COM SH     z   x   c   v   b   n   m   ,   .   / SH  ^v  <>        F8
+ :                         SP
+
+
+*** ZX Spectrum (39 keys)
+
+ :  1   2   3   4   5   6   7   8   9   0
+ :    Q   W   E   R   T   Y   U   I   O   P
+ :    q   w   e   r   t   y   u   i   o   p
+ :      A   S   D   F   G   J   K   L
+ :      a   s   d   f   g   j   k   l  RET
+ : CAPS   Z   X   C   V   B   N   M  SYM BRK
+ :  SH    z   x   c   v   b   n   m  SH  SP
+
+* Matrix
+
+|   | 0   | 1   | 2 | 3  | 4  | 5  | 6  | 7  |
+|---+-----+-----+---+----+----+----+----+----|
+| / | <   |     |   |    |    |    |    |    |
+| 0 | ESC | 1   | 2 | 3  | 4  | 5  | 6  |    |
+| 1 | `   | TAB | Q | E  | R  | T  | Y  |    |
+| 2 | CTL | A   | W | S  | D  | F  | G  | SH |
+| 3 | ,   | Z   | X | C  | V  | B  | N  | SP |
+| 4 | =   | BS  | - | 0  | 9  | 8  | 7  |    |
+| 5 | ]   | \   | [ | P  | O  | U  | H  |    |
+| 6 | '   | RET | L | K  | I  | J  | M  |    |
+| 7 | .   | /   | ; | LE | UP | DN | RI |    |
+
+
+* Ghosting
+
+The rows are selected by the byte written to the keyboard row
+register, and the columns are read when the keyboard column register
+is read.
+
+Ghosting occurs when two keys in row x are pressed together with a
+key in a different column but in the same row as one of the keys.
+If we call the pressed keys (x, a) and (x, b), the other key (y, a),
+then scanning column y will show (y, b) as pressed, regardless of
+whether it actually is or not.
+
+0. Keys that can ghost without harm:
+ - LSH+RSH
+ - LCTL+RCTL
+ - LE+RI
+ - UP+DN
+
+1. Keys where ghosting is Mostly Harmless:
+ - BS+RET
+ - BS+alphanumeric
+ - BS+arrow
+ - ESC+RET
+ - RET+alphanumeric
+ - RET+arrow
+
+2. Combinations for which ghosting is acceptable:
+
+3. Combinations for which ghosting is undesirable:
+ - A+S
+ - A+W
+ - D+S
+ - D+W
+ - I+J
+ - I+K
+ - J+M
+ - K+M
+ - ESC+any key
+ - CTL+SH+any key
+ - 
+4. Combinations which may not ghost:
+ - SH+any key
+ - CTL+any key
+ - DN+LE
+ - DN+RI
+ - UP+LE
+ - UP+RI
+
+* Electrical Interface
+
+The rows are connected so that they are either high impedance or 0.
+The columns are connected through 100K ohm pull-up resistors.
+When a key is pressed when its row its active, it drives its column
+low. Columns in which no key is pressed (on the active row) are 1.
+
+* Parts
+
+ - 1x 8-bit flip-flop for the rows. 74HC574.
+ - 1x 8-bit buffer for the columns. 74HCT245.
+ - 8 diodes. 1N4148 works fine.
+ - 8 resistors. 100K ohm was used for testing.
+
+Clock the flip-flop when its address is selected and /w is low.
+and clock (nor /w /sel).
+
+Buffer output is enabled when its address is selected and /oe is low.
+or /oe /sel.
+
+This allows for a relatively simple to build keyboard. Alternatively,
+the same interface can be implemented by a microcontroller, which can
+then speak a different protocol to the actual keyboard; for example,
+the PS/2 keyboard protocol.
+
+
+* Programming Interface
+
+2 memory locations. CPU writes column number to one, reads row from
+other.
+
+Between the write and the read, at least 4 CPU cycles need to
+elapse. That equates to 16 memory cycles and 32 master clock cycles.
+This should be ample time for a microcontroller to read and write
+a value, leaving cycles to interact with the actual keyboard.

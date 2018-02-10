@@ -1,0 +1,480 @@
+%!PS-Adobe-2.0
+%%BoundingBox: 0 0 612 792
+%%Title: Home Micro 1000 Keys
+%%Pages: 5
+%%DocumentMedia: Letter 612 792 0 white Plain
+%%Orientation: Landscape
+%%BeginSetup
+<< /PageSize [612 792] /Orientation 0 >> setpagedevice
+%%EndSetup
+%%Page: 1 5
+%%BeginPageSetup
+90 rotate
+1 -1 scale
+%%EndPageSetup
+/Helvetica findfont 16 scalefont setfont
+/keyspacing 42 def
+/halfspacing keyspacing 2 div def
+/quartspacing keyspacing 4 div def
+/keysize 38 def
+/leftmargin 72 def
+/rightmargin leftmargin keyspacing 15 mul add def
+
+0.7 setgray
+/col {
+    % n -- x
+    keyspacing mul leftmargin add
+} def
+/colplus {
+    % n -- x
+    col halfspacing add
+} def
+/row {
+    % n -- y
+    keyspacing mul 612 289 sub exch sub
+} def
+/midrow {
+    % n -- y
+    row halfspacing add
+} def
+/keyoutline {
+    % width height --
+    keysize 4 div sub exch keysize 4 div sub exch
+    keysize 8 div dup rmoveto
+    1 index 0 rlineto
+    dup 0 exch rlineto
+    exch neg 0 rlineto
+    0 exch neg rlineto
+} def
+/key {
+    % --
+    keysize keysize keyoutline stroke
+} def
+/key1_5 {
+    % --
+    halfspacing keysize add keysize keyoutline stroke
+} def
+/key2 {
+    % --
+    keyspacing keysize add keysize keyoutline stroke
+} def
+/key2_5 {
+    % --
+    keyspacing halfspacing keysize add add keysize keyoutline stroke
+} def
+/keys {
+    % x y n --
+    3 -1 roll exch
+    1 sub keyspacing mul 1 index add
+    keyspacing exch
+    { 1 index moveto key } for
+} def
+
+/addkeys {
+    % --
+    0 col -2 row moveto key
+    0 col 0 row 13 keys
+    13 col 0 row moveto key2
+    0 col 1 row moveto key1_5
+    1 colplus 1 row 12 keys
+    13 colplus 1 row moveto key1_5
+    0 col 2 row moveto key2
+    2 col 2 row 11 keys
+    13 col 2 row moveto key2
+    0 col 3 row moveto key2_5
+    2 colplus 3 row 10 keys
+    12 colplus 3 row moveto key1_5
+    14 col 3 row moveto key
+    4 col 4 row moveto 5 keyspacing mul keysize add keysize keyoutline stroke
+    11 colplus 4 row moveto key1_5
+    13 col 4 row 3 keys
+} def
+
+% 0
+7 setlinewidth
+leftmargin halfspacing sub -2 midrow moveto 2 keyspacing mul 0 rlineto
+0 2 keyspacing mul neg rlineto 5 keyspacing mul 0 rlineto stroke
+
+% 1
+leftmargin halfspacing sub 1 midrow moveto
+2.75 keyspacing mul 0 rlineto
+0 keyspacing 2 div rlineto stroke
+4 setlinewidth
+2 colplus quartspacing sub 0 row 1 sub moveto
+1.45 keyspacing mul 0 rlineto stroke
+7 setlinewidth
+3 colplus keyspacing 8 div add 0 row 1 sub moveto
+0 keyspacing 2 div neg rlineto 3.25 keyspacing mul 0 rlineto stroke
+0 colplus 1 midrow moveto 0 keyspacing rlineto stroke
+
+% 2
+leftmargin halfspacing sub 2 midrow moveto 6 colplus 2 midrow lineto stroke
+1 colplus 2 midrow moveto 1 colplus 3 midrow lineto stroke
+3 col 2 midrow moveto
+0 1 keyspacing mul rlineto stroke
+4 setlinewidth
+13 colplus 2 row 1 sub moveto 2 keyspacing mul 0 rlineto stroke
+7 setlinewidth
+
+% 3
+3 col 4 midrow moveto 0 keyspacing rlineto
+5 keyspacing mul 0 rlineto 0 keyspacing neg rlineto
+1.75 keyspacing mul 0 rlineto 0 keyspacing rlineto stroke
+13 colplus 3 midrow moveto 0 halfspacing rlineto stroke
+
+% 4
+7 colplus 0 midrow moveto
+rightmargin halfspacing add 0 midrow lineto stroke
+
+% 5
+7.25 colplus 2 midrow moveto
+0 keyspacing rlineto 0.25 keyspacing mul 0 rlineto
+0 keyspacing 2 div rlineto stroke
+4 setlinewidth
+8 col 0 row moveto 2 keyspacing mul 0 rlineto stroke
+7 setlinewidth
+10 col 0 row moveto 0 keyspacing 2 div neg rlineto
+rightmargin halfspacing add 1 midrow lineto stroke
+
+% 6
+8 colplus 2 midrow moveto 11 col 2 midrow lineto stroke
+9 col 3 midrow moveto 0 2 keyspacing mul rlineto stroke
+4 setlinewidth
+11 col 2 midrow moveto 0 halfspacing rlineto
+1.25 keyspacing mul 0 rlineto stroke
+7 setlinewidth
+12 colplus keyspacing 4 div sub 1 row moveto
+0 keyspacing 2 div neg rlineto rightmargin halfspacing add 2 midrow lineto
+stroke
+
+% 7
+11 colplus 2 midrow moveto 0 keyspacing neg rlineto stroke
+11 col 3 midrow moveto keyspacing 0 rlineto stroke
+12 col 3 midrow moveto 0 halfspacing neg rlineto stroke
+4 setlinewidth
+12 col 3 row moveto 1.5 keyspacing mul 0 rlineto stroke
+7 setlinewidth
+12 col 4 midrow moveto 0 keyspacing neg rlineto stroke
+13 colplus 3 row moveto 0 halfspacing neg rlineto
+2 keyspacing mul 0 rlineto stroke
+14 colplus 4 midrow moveto 0 keyspacing rlineto
+keyspacing 0 rlineto stroke
+
+1 setlinewidth
+addkeys
+
+showpage
+%%Page: 2 5
+%%BeginPageSetup
+90 rotate 0 -612 translate
+%%EndPageSetup
+
+/onesym {
+    % x y s --
+    2 index 12 add 2 index 14 add moveto show pop pop
+} def
+/twosym {
+    % x y s s --
+    4 2 roll moveto
+    gsave
+    14 23 rmoveto show
+    grestore
+    14 6 rmoveto show
+} def
+/col {
+    % n -- x
+    keyspacing mul leftmargin add
+} def
+/colplus {
+    % n -- x
+    col halfspacing add
+} def
+/row {
+    % n -- y
+    keyspacing mul 612 288 sub exch sub
+} def
+/downquart {
+    0 quartspacing neg
+} def
+/leftquart {
+    quartspacing neg 0
+} def
+/uphalf {
+    0 halfspacing
+} def
+/upquart {
+    0 quartspacing
+} def
+
+0.7 setgray
+1 setlinewidth
+/lcol {
+    % n -- x
+    col quartspacing add
+} def
+/lcolplus {
+    % n -- x
+    colplus quartspacing add
+} def
+/rcol {
+    % n -- x
+    col quartspacing 3 mul add
+} def
+/rcolplus {
+    % n -- x
+    colplus quartspacing 3 mul add
+} def
+/lrow {
+    % n -- y
+    row keyspacing 4 div add
+} def
+/urow {
+    % n -- y
+    row keyspacing 3 mul 4 div add 2 sub
+} def
+
+% 0
+4 setlinewidth
+0 lcol -2 lrow moveto
+quartspacing 2 add neg 0 rlineto 0 6.25 keyspacing mul 2 add neg rlineto
+keyspacing 12 mul 0 rlineto upquart rlineto stroke
+1 setlinewidth
+0 lcol 0 urow moveto quartspacing 2 add neg 0 rlineto stroke
+0 lcol 2 urow moveto quartspacing 2 add neg 0 rlineto stroke
+12 lcol 0 urow moveto uphalf rlineto stroke
+
+% 1
+2 lcolplus 3 urow moveto uphalf rlineto stroke
+2 lcol 2 urow moveto upquart rlineto
+keyspacing 3 mul 4 div neg 2 sub 0 rlineto
+0 keyspacing 5 mul 4 div rlineto stroke
+1 lcol 1 urow moveto keyspacing 4 div 2 sub 0 rlineto stroke
+
+% 2
+3 lcolplus 3 urow moveto upquart rlineto
+3 keyspacing mul 4 div 2 add neg 0 rlineto
+0 1.25 keyspacing mul rlineto stroke
+2 lcolplus 1 urow moveto keyspacing 2 div neg 0 rlineto stroke
+2 lcolplus 1 urow moveto uphalf rlineto stroke
+
+% 3
+3 rcol 2 urow moveto uphalf rlineto stroke
+4 lcolplus 3 urow moveto upquart rlineto
+keyspacing 3 mul 4 div 2 add neg 0 rlineto
+0 keyspacing 5 mul 4 div rlineto stroke
+3 lcolplus 1 urow moveto uphalf rlineto stroke
+13 lcol 5 urow moveto uphalf rlineto stroke
+13 lcol 5 urow moveto quartspacing 0 rlineto
+0 halfspacing neg rlineto quartspacing neg 0 rlineto
+0 halfspacing rlineto stroke
+
+% 4
+5 lcolplus 3 urow moveto upquart rlineto
+keyspacing 7 mul 8 div neg 0 rlineto quartspacing neg quartspacing rlineto
+stroke
+4 lcolplus 2 urow moveto uphalf rlineto stroke
+4 lcolplus 1 urow moveto uphalf rlineto stroke
+14 col 2 sub 5 urow moveto 0 keyspacing 3 mul 2 div rlineto
+quartspacing 0 rlineto stroke
+14 col 2 sub 5 urow moveto quartspacing neg 0 rlineto
+0 halfspacing neg rlineto quartspacing 0 rlineto
+0 halfspacing rlineto stroke
+
+% 5
+6 lcolplus 3 urow moveto upquart rlineto
+keyspacing 7 mul 8 div neg 0 rlineto quartspacing neg quartspacing rlineto
+stroke
+5 lcolplus 2 urow moveto uphalf rlineto stroke
+5 lcolplus 1 urow moveto uphalf rlineto stroke
+14 lcol 5 urow moveto uphalf rlineto stroke
+14 lcol 5 urow moveto quartspacing 0 rlineto
+0 halfspacing neg rlineto quartspacing neg 0 rlineto
+0 halfspacing rlineto stroke
+
+% 6
+8 lcol 3 urow moveto keyspacing 2 div 0 rlineto stroke
+7 lcolplus 3 urow moveto uphalf rlineto stroke
+7 lcol 2 urow moveto uphalf rlineto stroke
+6 lcolplus 2 urow moveto uphalf rlineto stroke
+6 lcolplus 1 urow moveto uphalf rlineto stroke
+7 lcol 1 urow moveto uphalf rlineto stroke
+15 lcol 5 urow moveto uphalf rlineto stroke
+15 lcol 5 urow moveto quartspacing 0 rlineto
+0 halfspacing neg rlineto quartspacing neg 0 rlineto
+0 halfspacing rlineto stroke
+
+% 7
+2 lcol 3 urow keyspacing 2 div sub moveto 0 halfspacing neg rlineto
+7.5 keyspacing mul 0 rlineto upquart rlineto
+3 keyspacing mul 0 rlineto upquart rlineto stroke
+
+% 5
+8 lcol 1 urow moveto
+0 keyspacing 2 div rlineto stroke
+8 lcol 2 urow moveto
+0 keyspacing 2 div rlineto stroke
+9 lcolplus 1 urow moveto 0 keyspacing 2 div rlineto stroke
+
+% 4
+9 lcol 1 urow moveto uphalf rlineto stroke
+
+% 3
+9 lcol 2 urow moveto
+0 keyspacing 4 div rlineto
+1.5 keyspacing mul 0 rlineto upquart rlineto stroke
+10 lcolplus 1 urow moveto uphalf rlineto stroke
+
+% 2
+10 lcolplus 2 urow moveto keyspacing 2 div 0 rlineto stroke
+11 lcolplus 2 urow moveto uphalf rlineto stroke
+11 lcolplus 1 urow moveto uphalf rlineto stroke
+
+% 0
+10 lcol 3 urow moveto keyspacing 2 div 0 rlineto stroke
+11 lcol 3 urow moveto upquart rlineto
+keyspacing 7 mul 8 div 0 rlineto quartspacing quartspacing rlineto stroke
+12 lcolplus 2 urow moveto uphalf rlineto stroke
+12 lcolplus 1 urow moveto uphalf rlineto stroke
+12 lcol -1 row moveto quartspacing 0 rlineto
+uphalf rlineto quartspacing neg 0 rlineto 0 halfspacing neg rlineto stroke
+
+% 1
+12 lcol 3 urow moveto upquart rlineto
+keyspacing 0 rlineto upquart rlineto stroke
+14 lcol 2 urow moveto uphalf rlineto stroke
+14 lcol 1 urow moveto uphalf rlineto stroke
+
+% top row connections
+4 setlinewidth
+1 lcolplus 0 urow moveto upquart rlineto 21 keyspacing mul 4 div 56 rlineto
+6.5 keyspacing mul 0 rlineto 0 keyspacing 4 div 56 add neg rlineto stroke
+2 lcolplus 0 urow moveto upquart rlineto 17 keyspacing mul 4 div 42 rlineto
+17 keyspacing mul 4 div -42 rlineto downquart rlineto stroke
+3 lcolplus 0 urow moveto upquart rlineto 13 keyspacing mul 4 div 28 rlineto
+13 keyspacing mul 4 div -28 rlineto downquart rlineto stroke
+4 lcolplus 0 urow moveto upquart rlineto 9 keyspacing mul 4 div 14 rlineto
+9 keyspacing mul 4 div -14 rlineto downquart rlineto stroke
+1 setlinewidth
+5 lcolplus 0 urow moveto upquart rlineto 10 keyspacing mul 4 div 0 rlineto
+downquart rlineto stroke
+
+addkeys
+
+showpage
+%%Page: 3 5
+%%BeginPageSetup
+90 rotate 0 -612 translate
+%%EndPageSetup
+
+/keyoutline {
+    % width height --
+    1 index 0 rlineto
+    dup 0 exch rlineto
+    exch neg 0 rlineto
+    0 exch neg rlineto
+} def
+
+0.7 setgray
+addkeys
+
+showpage
+%%Page: 4 5
+%%BeginPageSetup
+90 rotate 0 -612 translate
+%%EndPageSetup
+
+0.7 setgray
+addkeys
+
+showpage
+%%Page: 5 5
+%%BeginPageSetup
+90 rotate 0 -612 translate
+%%EndPageSetup
+
+/col {
+    % n -- x
+    keyspacing mul leftmargin add
+} def
+/colplus {
+    % n -- x
+    col halfspacing add
+} def
+/row {
+    % n -- y
+    keyspacing mul 612 288 sub exch sub
+} def
+
+0 setgray
+1 setlinewidth
+
+addkeys
+
+0 col 8 sub -2 row (Esc) onesym
+
+0 col 0 row (`) (~) twosym
+1 col 0 row (1) (!) twosym
+2 col 0 row (2) (@) twosym
+3 col 0 row (3) (#) twosym
+4 col 0 row (4) ($) twosym
+5 col 0 row (5) (%) twosym
+6 col 0 row (6) (^) twosym
+7 col 0 row (7) (&) twosym
+8 col 0 row (8) (*) twosym
+9 col 0 row (9) (\() twosym
+10 col 0 row (0) (\)) twosym
+11 col 0 row (-) (_) twosym
+12 col 0 row (=) (+) twosym
+13 col 34 add 0 row 12 add moveto (<--) show
+
+0 col 1 row (Tab) onesym
+1 colplus 1 row (Q) onesym
+2 colplus 1 row (W) onesym
+3 colplus 1 row (E) onesym
+4 colplus 1 row (R) onesym
+5 colplus 1 row (T) onesym
+6 colplus 1 row (Y) onesym
+7 colplus 1 row (U) onesym
+8 colplus 1 row (I) onesym
+9 colplus 1 row (O) onesym
+10 colplus 1 row (P) onesym
+11 colplus 1 row ([) ({) twosym
+12 colplus 1 row (]) (}) twosym
+14 col 1 row (\\) (|) twosym
+
+0 colplus 2 row (Ctrl) onesym
+2 col 2 row (A) onesym
+3 col 2 row (S) onesym
+4 col 2 row (D) onesym
+5 col 2 row (F) onesym
+6 col 2 row (G) onesym
+7 col 2 row (H) onesym
+8 col 2 row (J) onesym
+9 col 2 row (K) onesym
+10 col 2 row (L) onesym
+11 col 2 row (;) (:) twosym
+12 col 2 row (') (") twosym
+13 colplus 2 row (Enter) onesym
+
+0 colplus 3 row (Shift) onesym
+2 colplus 3 row (Z) onesym
+3 colplus 3 row (X) onesym
+4 colplus 3 row (C) onesym
+5 colplus 3 row (V) onesym
+6 colplus 3 row (B) onesym
+7 colplus 3 row (N) onesym
+8 colplus 3 row (M) onesym
+9 colplus 3 row (,) (<)  twosym
+10 colplus 3 row (.) (>) twosym
+11 colplus 3 row (/) (?) twosym
+12 colplus 3 row (Shift) onesym
+14 col 4 sub 3 row (UP) onesym
+
+11 colplus 4 row (Ctrl) onesym
+13 col 4 sub 4 row (LE) onesym
+14 col 4 sub 4 row (DN) onesym
+15 col 4 sub 4 row (RI) onesym
+
+showpage
+%%Trailer
+%%EOF
