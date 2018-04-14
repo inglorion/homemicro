@@ -1,0 +1,762 @@
+#+TITLE: How to Build the Home Micro HM1000
+
+** Parts
+
+ - 1x 14.31818MHz crystal oscillator.
+ - 1x ATmega328p.
+ - 1x DIP32 Flash chip, at least 64 kilobit. For example, Microchip SST39F010A.
+ - 1x DIP32 SRAM chip, at least 512 kilobit. For example, Alliance AS6C1008.
+ - 1x WDC 65C02S or 65C816S.
+ - 1x 74HC08 quad 2-input AND gate.
+ - 1x 74HC10 triple 3-input NAND gate.
+ - 1x 74HC138 3-to-8 line demultiplexer; inverting.
+ - 1x 74HC139 dual 2-to-4 line decoder/demultiplexer.
+ - 2x 74HC161 presettable synchronous 4-bit binary counter.
+ - 1x 74HC166 8-bit parallel-in/serial-out shift register.
+ - 3x 74HC251 octal buffer/line driver; 3-state.
+ - 1x 74HC299 8-bit universal shift register; tri-state.
+ - 1x 74HC574 octal D-type flip-flop; positive edge-trigger; tri-state.
+ - 8x 1N4148 small signal diode.
+ - 8x 100K ohm resistor.
+ - 5x 1K ohm resistor.
+ - 2x 10K ohm resistor.
+ - 1x 100 microfarad capacitor.
+ - 8x 0.047 microfarad capacitor.
+ - VGA port.
+ - A power switch.
+ - 5V power supply.
+
+You will also need something to build it on and some way to connect
+the components. The computer can be built on a breadboard (it fits on
+a 3220 tie-point board) or using wire-wrap. Printed circuit board
+would also be possible, but no PCB layout is available yet.
+
+*** Substitutions
+
+In many cases, other parts can be substituted for the ones listed
+above. For example, you should be able to use AHC logic instead of HC
+without any problems. HCT probably also works fine. The parts list
+shows HC parts because those tend to be easiest to obtain.
+
+For the RAM, make sure that the data lines are high impedance when
+ce# is high.
+
+For the CPU, you need a 6502 with a bus enable pin. Other variants
+can be made to work, but you will have to add logic to stop the CPU
+from driving the address and data buses when bus enable is low. The
+CPU also needs to be able to run at 1.79MHz. Using the 65C816S allows
+for the possibility of later reusing it in a more advanced, even
+16-bit computer.
+
+Instead of an ATmega328p, you can use an ATmega328 (without the
+p).
+
+Instead of '574s you can use '374s. They do the same thing, but the
+pinout is different, so be sure to wire them correctly.
+
+No particularly stringent requirements are put on the diodes
+connecting to the keyboard. This means that, instead of 1N4148, many
+other types of diode could be used. Probably the most important thing
+to pay attention to is the forward voltage drop. If this exceeds 1.3V,
+the diode cannot pull its anode low enough to read as a logic 0, so
+you need a diode with a forward voltage drop that's comfortably below
+1.3V.
+
+** How to Read the Instructions
+
+The wiring tables shown in the instructions have tables that show
+what to connect each pin to. Pin numbers are shown in the first
+column, along with a pin name as it may be found in the component's
+datasheet. Due to different manufacturers using different pin names,
+not all names necessarily match those in your components' datasheets
+exactly. Moreover, although many components used have standard
+pinouts, in other cases, different components that perform the same
+function may have different pinouts. Generally, the text will point
+out cases where the pinout shown in the table may not match the pinout
+of your actual component.
+
+Connections are shown in the second column. Connections to signals
+that already exist when the component is added are shown as regular
+text. Italics indicate connections that will be made later. These are
+usually signals that are provided by the component, which will be
+connected once components that require them are inserted. There are
+also a number of special signal names. A table may look like:
+
+| Pin        | Connection |
+|------------+------------|
+| 1 (reset#) | high       |
+| 2 (s)      | low        |
+| 3 (a)      | siga       |
+| 4 (gnd)    | GND        |
+| 5 (b)      | NC         |
+| 6 (y)      | /sigb/     |
+| 7 (oe#)    | low        |
+| 8 (vcc)    | Vcc        |
+
+This shows a hypothetical component with 8 pins. The way to read
+the connections is:
+
+ - Vcc :: This is the supply voltage (+5V). Data sheets may also refer to it
+   as Vdd.
+ - GND :: This is the ground (0V). Data sheets may also refer to it as
+   Vss.
+ - high :: This pin should be connected to a logic high value. The easiest
+   way to do so is to connect it to Vcc.
+ - low :: This pin should be connected to a logic low value. The easiest way
+   to do so is to connect it to GND.
+ - NC :: No connect. This pin should be left unconnected.
+ - siga (regular text) ::
+   Connect this pin to the existing siga signal. Generally, the
+   instructions will provide a source of that signal within
+   parentheses. Note that, in some cases, the pin number a signal is
+   provided on may vary based on the exact component used. For example,
+   the 74HC374 and 74HC574 provide the same signals, but on different
+   pins. Therefore, double-check that you are using the correct pins for
+   the components you're actually using.
+ - /sigb/ (italics) :: This pin will be connected later. We will refer to the
+   signal it provides as sigb.
+
+** Instructions
+
+*** VGA Signal
+
+Insert the crystal oscillator. Consult the data sheet for correct
+wiring. Commonly, crystal oscillators come in dual in-line packages
+that are the size of a DIP8 or DIP14, but have only 4 leads. Generally
+you will wire one pin to Vcc, one pin to GND, and one pin will be your
+output. The remaining pin may be no connect or it may be an
+enable/disable pin.
+
+You can check that everything is working right on the
+oscilloscope. You should have a waveform that oscillates at
+14.31818MHz or something very close to it, with a minimum of less than
+1.6V and a maximum of at least 3.3V. It may look more like a sawtooth
+wave than like a square wave. If so, that's ok - as long as the
+frequency is correct and it reaches the required voltages.
+
+Insert the ATmega328p. Wire it as follows:
+
+ | Pin           | Connection                         |
+ |---------------+------------------------------------|
+ | 1 (reset#)    | High                               |
+ | 2 (pd0)       | /va0/                              |
+ | 3 (pd1)       | /va1/                              |
+ | 4 (pd2)       | /va2/                              |
+ | 5 (pd3)       | /va3/                              |
+ | 6 (pd4)       | /va4/                              |
+ | 7 (vcc)       | Vcc                                |
+ | 8 (gnd)       | GND                                |
+ | 9 (pb6/xtal1) | clk14 (output from the oscillator) |
+ | 10 (pb7)      | NC                                 |
+ | 11 (pd5)      | /va5/                              |
+ | 12 (pd6)      | /va6/                              |
+ | 13 (pd7)      | /va7/                              |
+ | 14 (pb0)      | /va8/                              |
+ | 15 (pb1)      | /va9/                              |
+ | 16 (pb2)      | /va10/                             |
+ | 17 (pb3)      | /va11/                             |
+ | 18 (pb4)      | /va12/                             |
+ | 19 (pb5)      | NC                                 |
+ | 20 (avcc)     | High                               |
+ | 21 (aref)     | High                               |
+ | 22 (gnd)      | GND                                |
+ | 23 (pc0)      | NC                                 |
+ | 24 (pc1)      | NC                                 |
+ | 25 (pc2)      | /vrdy/                             |
+ | 26 (pc3)      | /video active/                     |
+ | 27 (pc4)      | /hsync/                            |
+ | 28 (pc5)      | /vsync/                            |
+ |               |                                    |
+
+If all is well, pin 28 (pc5) should output a signal that stays high
+for 16.656ms, then goes low for 0.064ms, for a frequency of about
+59.8Hz. This is the vsync signal. Pin 27 (pc4) should output a signal
+that stays high for 27.937us, then goes low for 0.629us. This is the
+hsync signal. Don't worry if the oscilloscope displays slightly
+different values. If you're getting the signals and your crystal has
+the right frequency, the signals should be right.
+
+Add the VGA port. For the numbering, if the wide side of the port
+is up, pin 1 is in the top right, pin 5 in the top left, pin 6 in the
+middle right, pin 10 in the middle left, pin 11 in the bottom right,
+and pin 15 in the bottom left:
+
+#+BEGIN_SRC text
+\----------------------/
+ \    5  4  3  2  1   /
+  \   10  9  8  7  6 /
+   \ 15 14 13 12 11 /
+    \--------------/
+#+END_SRC
+
+Wire it as follows:
+
+ | Pin               | Connection                |
+ |-------------------+---------------------------|
+ | 1 (red)           | red (1K ohm resistor)     |
+ | 2 (green)         | green (1K ohm resistor)   |
+ | 3 (blue)          | blue (1K ohm resistor)    |
+ | 4 (id2)           | NC                        |
+ | 5 (gnd)           | GND                       |
+ | 6 (rgnd)          | GND                       |
+ | 7 (ggnd)          | GND                       |
+ | 8 (bgnd)          | GND                       |
+ | 9 (key)           | NC                        |
+ | 10 (sgnd)         | GND                       |
+ | 11 (id0)          | NC                        |
+ | 12 (id1/sda)      | NC                        |
+ | 13 (hsync)        | hsync (ATmega328p pin 27) |
+ | 14 (vsync)        | vsync (ATmega328p pin 28) |
+ | 15 (id3/scl)      | NC                        |
+
+Of course, we don't actually have red, green, and blue yet. You can
+temporarily add 1K ohm resistors to pins 1, 2, and 3, and connect those
+resistors to pin 26 of the ATmega328p.
+
+When you connect the circuit to a VGA monitor and power it on, the
+monitor should be able to synchronize to the signal. If you connected
+the red, green, and blue signals as described above, the monitor
+should display a grey rectangle.
+
+*** Pixels
+
+Add a 74HC161. This will be used to divide the 14.318MHz clk14
+signal to lower frequencies. Wire it as follows:
+
+ | Pin      | Connection                       |
+ |----------+----------------------------------|
+ | 1 (mr#)  | pin 25 (pc2) of the ATmega328p   |
+ | 2 (cp#)  | clk14 (output of the oscillator) |
+ | 3 (d0)   | high                             |
+ | 4 (d1)   | high                             |
+ | 5 (d2)   | high                             |
+ | 6 (d3)   | high                             |
+ | 7 (cep)  | high                             |
+ | 8 (gnd)  | GND                              |
+ | 9 (pe#)  | high                             |
+ | 10 (cet) | high                             |
+ | 11 (q3)  | NC                               |
+ | 12 (q2)  | /clk1 (1.79MHz)/                 |
+ | 13 (q1)  | /clk3 (3.58MHz)/                 |
+ | 14 (q0)  | /clk7 (7.16MHz)/                 |
+ | 15 (tc)  | NC                               |
+ | 16 (vcc) | Vcc                              |
+
+Add a 74HC08 to create a signal that goes high when video active
+and clk3 are both high. We will later use the same '08 to generate
+the ram# and oe# signals.
+
+ | Pin      | Connection                              |
+ |----------+-----------------------------------------|
+ | 1 (1a)   | video active (pin 26 of the ATmega328p) |
+ | 2 (1b)   | clk3 (pin 13 of the clock divider)      |
+ | 3 (1y)   | /active_clk3/                           |
+ | 4 (2a)   | /a0/                                    |
+ | 5 (2b)   | clk3 (pin 13 of the clock divider)      |
+ | 6 (2y)   | /clk3a0/                                |
+ | 7 (gnd)  | GND                                     |
+ | 8 (3y)   | /ram# (connect to the RAM's ce#)/       |
+ | 9 (3a)   | /a15 (pin 9 of the 74HC10)/             |
+ | 10 (3b)  | /a14 (pin 10 of the 74HC10)/            |
+ | 11 (4y)  | /connect to RAM's oe#/                  |
+ | 12 (4a)  | /connect to pin 12 of the '10/          |
+ | 13 (4b)  | /clk1 (pin 12 of the clock divider)/    |
+ | 14 (vcc) | Vcc                                     |
+
+We will use a 74HC139 as a load pulse generator. This will generate
+the ldpix# signal to load pixel data every 8 pixels, and the ldkbrow
+signal to latch keyboard row data. Wire it as follows:
+
+ | Pin       | Connection                         |
+ |-----------+------------------------------------|
+ | 1 (1e#)   | rwb (pin 13 of the '10)            |
+ | 2 (1a0)   | /io2#/                             |
+ | 3 (1a1)   | io4#                               |
+ | 4 (1y0#)  | NC                                 |
+ | 5 (1y1#)  | /ldsercr/                          |
+ | 6 (1y2#)  | /ldkbrow/                          |
+ | 7 (1y3#)  | NC                                 |
+ | 8 (gnd)   | GND                                |
+ | 9 (2y3#)  | /ldpix#/                           |
+ | 10 (2y2#) | NC                                 |
+ | 11 (2y1#) | NC                                 |
+ | 12 (2y0#) | NC                                 |
+ | 13 (2a1)  | active_clk3 (pin 3 of the '08)     |
+ | 14 (2a0)  | clk7 (pin 14 of the clock divider) |
+ | 15 (2e#)  | clk1 (pin 12 of the clock divider) |
+ | 16 (vcc)  | Vcc                                |
+
+Connect a 74HC166 shift register. This will be used to shift the
+pixel data out one bit at a time.
+
+ | Pin      | Connection                                 |
+ |----------+--------------------------------------------|
+ | 1 (ds)   | low                                        |
+ | 2 (d0)   | /d0/                                       |
+ | 3 (d1)   | /d1/                                       |
+ | 4 (d2)   | /d2/                                       |
+ | 5 (d3)   | /d3/                                       |
+ | 6 (ce#)  | low                                        |
+ | 7 (cp)   | clk14 (oscillator output)                  |
+ | 8 (gnd)  | GND                                        |
+ | 9 (mr#)  | high                                       |
+ | 10 (d4)  | /d4/                                       |
+ | 11 (d5)  | /d5/                                       |
+ | 12 (d6)  | /d6/                                       |
+ | 13 (q7)  | /pixel output/                             |
+ | 14 (d7)  | /d7/                                       |
+ | 15 (pe#) | ldpix# (pin 9 of the load pulse generator) |
+ | 16 (vcc) | Vcc                                        |
+
+If you made the temporary connection between the ATmega328p and the
+red, green, and blue lines, remove it now.
+
+Connect each of red, green, and blue to a 1K ohm resistor, and
+connect those resistors to pin 13 (q7) of the '166.
+
+If you create a bit pattern on the d0..d7 pins of the '166 by
+temporarily wiring some of the pins low and others high, turning on
+the power should display the bit pattern, repeated every 8 pixels.
+
+*** Memory
+
+The ATmega328p generates addresses to read pixel data from. Let's
+use those addresses to control the image we display.
+
+To prevent the ATmega328p from accessing memory at the same
+time as the CPU, we run the address lines from the ATmega through two
+74HC541 buffers. The first handles the lower 8 bits of the address,
+and is wired as follows:
+
+ | Pin       | Connection                         |
+ |-----------+------------------------------------|
+ | 1 (oe1#)  | low                                |
+ | 2 (a0)    | va0 (ATMega328p pin 2 / pd0)       |
+ | 3 (a1)    | va1 (ATMega328p pin 3 / pd1)       |
+ | 4 (a2)    | va2 (ATMega328p pin 4 / pd2)       |
+ | 5 (a3)    | va3 (ATMega328p pin 5 / pd3)       |
+ | 6 (a4)    | va4 (ATMega328p pin 6 / pd4)       |
+ | 7 (a5)    | va5 (ATMega328p pin 11 / pd5)      |
+ | 8 (a6)    | va6 (ATMega328p pin 12 / pd6)      |
+ | 9 (a7)    | va7 (ATMega328p pin 13 / pd7)      |
+ | 10 (gnd)  | GND                                |
+ | 11 (b7)   | /a7/                               |
+ | 12 (b6)   | /a6/                               |
+ | 13 (b5)   | /a5/                               |
+ | 14 (b4)   | /a4/                               |
+ | 15 (b3)   | /a3/                               |
+ | 16 (b2)   | /a2/                               |
+ | 17 (b1)   | /a1/                               |
+ | 18 (b0)   | /a0/                               |
+ | 19 (oe2#) | clk1 (pin 12 of the clock divider) |
+ | 20 (vcc)  | Vcc                                |
+
+The second one handles the upper 8 bits of the address and is wired
+like so:
+
+ | Pin       | Connection                         |
+ |-----------+------------------------------------|
+ | 1 (oe1#)  | low                                |
+ | 2 (a0)    | va8 (ATMega328p pin 14 / pb0)      |
+ | 3 (a1)    | va9 (ATMega328p pin 15 / pb1)      |
+ | 4 (a2)    | va10 (ATMega328p pin 16 / pb2)     |
+ | 5 (a3)    | va11 (ATMega328p pin 17 / pb3)     |
+ | 6 (a4)    | va12 (ATMega328p pin 18 / pb4)     |
+ | 7 (a5)    | high                               |
+ | 8 (a6)    | low                                |
+ | 9 (a7)    | low                                |
+ | 10 (gnd)  | GND                                |
+ | 11 (b7)   | /a15/                              |
+ | 12 (b6)   | /a14/                              |
+ | 13 (b5)   | /a13/                              |
+ | 14 (b4)   | /a12/                              |
+ | 15 (b3)   | /a11/                              |
+ | 16 (b2)   | /a10/                              |
+ | 17 (b1)   | /a9/                               |
+ | 18 (b0)   | /a8/                               |
+ | 19 (oe2#) | clk1 (pin 12 of the clock divider) |
+ | 20 (vcc)  | Vcc                                |
+
+The pinout for the RAM chip shown here is for the Alliance
+AS6C2008. Other SRAM chips should have similar pinouts. Check your
+datasheet to make sure. Note that the address pins in the datasheet of
+the chip do not match the address bit numbers on the bus. This is ok,
+as long as every bus address maps to a unique and valid address on the
+chip.
+
+ | Pin      | Connection                        |
+ |----------+-----------------------------------|
+ | 1 (a17)  | low                               |
+ | 2 (a16)  | low                               |
+ | 3 (a14)  | a0 (lower address buffer pin 18)  |
+ | 4 (a12)  | a1 (lower address buffer pin 17)  |
+ | 5 (a7)   | a2 (lower address buffer pin 16)  |
+ | 6 (a6)   | a3 (lower address buffer pin 15)  |
+ | 7 (a5)   | a4 (lower address buffer pin 14)  |
+ | 8 (a4)   | a5 (lower address buffer pin 13)  |
+ | 9 (a3)   | a6 (lower address buffer pin 12)  |
+ | 10 (a2)  | a7 (lower address buffer pin 11)  |
+ | 11 (a1)  | a8 (upper address buffer pin 18)  |
+ | 12 (a0)  | a9 (upper address buffer pin 17)  |
+ | 13 (d0)  | d0 ('166 pin 2)                   |
+ | 14 (d1)  | d1 ('166 pin 3)                   |
+ | 15 (d2)  | d2 ('166 pin 4)                   |
+ | 16 (gnd) | GND                               |
+ | 17 (d3)  | d3 ('166 pin 5)                   |
+ | 18 (d4)  | d4 ('166 pin 10)                  |
+ | 19 (d5)  | d5 ('166 pin 11)                  |
+ | 20 (d6)  | d6 ('166 pin 12)                  |
+ | 21 (d7)  | d7 ('166 pin 14)                  |
+ | 22 (ce#) | /ram#/                            |
+ | 23 (a10) | a15 (upper address buffer pin 11) |
+ | 24 (oe#) | /oe#/                             |
+ | 25 (a11) | a14 (upper address buffer pin 12) |
+ | 26 (a9)  | a13 (upper address buffer pin 13) |
+ | 27 (a8)  | a12 (upper address buffer pin 14) |
+ | 28 (a13) | a11 (upper address buffer pin 15) |
+ | 29 (we#) | /w#/                              |
+ | 30 (ce2) | high                              |
+ | 31 (a15) | a10 (upper address buffer pin 16) |
+ | 32 (vcc) | Vcc                               |
+
+On the AS6C4008, pin 1 is a18 and pin 30 is a17. Wiring it the same
+way as an AS6C2008 should work.
+
+On the AS6C1008, pin 1 is no connect instead of a17 and you should
+leave it unconnected.
+
+To test, you can temporarily wire we# high, oe# low, and ce# low.
+This gives you a circuit that reads an image from memory and displays
+it. Of course, there is no way to control what is in that memory, so
+the image you see will be random. It may change when you turn the
+power off and back on. However, it should not change while the machine
+is powered on. Undo the temporary wiring after testing.
+
+Add the ROM chip. Consult the datasheet for the proper wiring. The
+wiring in the table below is for the Microchip SST39SF0{1,2,4}0. The
+references to pin numbers on the RAM chip correspond to those on the
+AS6C2008, and may differ if you are using a different RAM chip.
+
+ | Pin      | Connection              |
+ |----------+-------------------------|
+ | 1 (a18)  | low                     |
+ | 2 (a16)  | low                     |
+ | 3 (a15)  | low                     |
+ | 4 (a12)  | a12 (pin 27 of the RAM) |
+ | 5 (a7)   | a7 (pin 10 of the RAM)  |
+ | 6 (a6)   | a6 (pin 9 of the RAM)   |
+ | 7 (a5)   | a5 (pin 8 of the RAM)   |
+ | 8 (a4)   | a4 (pin 7 of the RAM)   |
+ | 9 (a3)   | a3 (pin 6 of the RAM)   |
+ | 10 (a2)  | a2 (pin 5 of the RAM)   |
+ | 11 (a1)  | a1 (pin 4 of the RAM)   |
+ | 12 (a0)  | a0 (pin 3 of the RAM)   |
+ | 13 (d0)  | d0 (pin 13 of the RAM)  |
+ | 14 (d1)  | d1 (pin 14 of the RAM)  |
+ | 15 (d2)  | d2 (pin 15 of the RAM)  |
+ | 16 (gnd) | GND                     |
+ | 17 (d3)  | d3 (pin 17 of the RAM)  |
+ | 18 (d4)  | d4 (pin 18 of the RAM)  |
+ | 19 (d5)  | d5 (pin 19 of the RAM)  |
+ | 20 (d6)  | d6 (pin 20 of the RAM)  |
+ | 21 (d7)  | d7 (pin 21 of the RAM)  |
+ | 22 (ce#) | /rom#/                  |
+ | 23 (a10) | a10 (pin 31 of the RAM) |
+ | 24 (oe#) | /r#/                    |
+ | 25 (a11) | a11 (pin 28 of the RAM) |
+ | 26 (a9)  | a9 (pin 12 of the RAM)  |
+ | 27 (a8)  | a8 (pin 11 of the RAM)  |
+ | 28 (a13) | low                     |
+ | 29 (a14) | low                     |
+ | 30 (a17) | low                     |
+ | 31 (we#) | high                    |
+ | 32 (vdd) | Vcc                     |
+
+To test, you can temporarily wire the ROM's ce# and oe# low (make
+sure the RAM chip isn't also driving the data bus, e.g. by removing it
+or temporarily wiring its ce# high). This causes the video circuit to
+read from ROM. The displayed image should look like some random noise,
+some white blocks (corresponding to the memory value $ff), and part of
+the display should show the machine's character set. If you power the
+machine off and power it back on, you should see the same pixels as
+before. After testing, undo the temporary wiring.
+
+*** CPU
+
+Consult your CPU's data sheet for the proper wiring. Wiring for the
+65C816S is shown below. This assumes the ROM chip pinout of the
+SST39SF0{1,2,4}0; if your ROM chip is different, adjust the ROM chip pin
+numbers accordingly.
+
+Note that pins a13, a14, and a15 (pins 23, 24, and 25) connect to
+the RAM chip rather than to the ROM chip, because we don't use those
+address lines when addressing ROM.
+
+ | Pin       | Connection                         |
+ |-----------+------------------------------------|
+ | 1 (vpb)   | NC                                 |
+ | 2 (rdy)   | 10K ohm pull-up resistor           |
+ | 3 (abort) | 10K ohm pull-up resistor           |
+ | 4 (irq)   | high                               |
+ | 5 (mlb)   | NC                                 |
+ | 6 (nmib)  | high                               |
+ | 7 (vpa)   | NC                                 |
+ | 8 (vdd)   | Vcc                                |
+ | 9 (a0)    | a0 (pin 12 of the ROM chip)        |
+ | 10 (a1)   | a1 (pin 11 of the ROM chip)        |
+ | 11 (a2)   | a2 (pin 10 of the ROM chip)        |
+ | 12 (a3)   | a3 (pin 9 of the ROM chip)         |
+ | 13 (a4)   | a4 (pin 8 of the ROM chip)         |
+ | 14 (a5)   | a5 (pin 7 of the ROM chip)         |
+ | 15 (a6)   | a6 (pin 6 of the ROM chip)         |
+ | 16 (a7)   | a7 (pin 5 of the ROM chip)         |
+ | 17 (a8)   | a8 (pin 27 of the ROM chip)        |
+ | 18 (a9)   | a9 (pin 26 of the ROM chip)        |
+ | 19 (a10)  | a10 (pin 23 of the ROM chip)       |
+ | 20 (a11)  | a11 (pin 25 of the ROM chip)       |
+ | 21 (vss)  | GND                                |
+ | 22 (a12)  | a12 (pin 4 of the ROM chip)        |
+ | 23 (a13)  | a13 (pin 26 of the RAM chip)       |
+ | 24 (a14)  | a14 (pin 25 of the RAM chip)       |
+ | 25 (a15)  | a15 (pin 23 of the RAM chip)       |
+ | 26 (d7)   | d7 (pin 21 of the ROM chip)        |
+ | 27 (d6)   | d6 (pin 20 of the ROM chip)        |
+ | 28 (d5)   | d5 (pin 19 of the ROM chip)        |
+ | 29 (d4)   | d4 (pin 18 of the ROM chip)        |
+ | 30 (d3)   | d3 (pin 17 of the ROM chip)        |
+ | 31 (d2)   | d2 (pin 15 of the ROM chip)        |
+ | 32 (d1)   | d1 (pin 14 of the ROM chip)        |
+ | 33 (d0)   | d0 (pin 13 of the ROM chip)        |
+ | 34 (rwb)  | 10K ohm pull-up resistor           |
+ | 35 (e)    | NC                                 |
+ | 36 (be)   | connect to pin 37 (phi2)           |
+ | 37 (phi2) | clk1 (pin 12 of the clock divider) |
+ | 38 (mx)   | NC                                 |
+ | 39 (vda)  | NC                                 |
+ | 40 (resb) | reset# (pin 25 of the ATmega328p)  |
+
+When using the 65C02S, pin 3 is an output and should be left
+unconnected.
+
+*** Glue Logic
+
+The address decoder is a circuit that uses the address on the bus
+to decide if we're accessing RAM, ROM, or I/O. This will be built
+using a 74HC10 and the 74HC08 that was added earlier. Wire the 74HC10
+like so:
+
+ | Pin      | Connection                         |
+ |----------+------------------------------------|
+ | 1 (1a)   | high                               |
+ | 2 (1b)   | high                               |
+ | 3 (2a)   | clk3 (pin 13 of the clock divider) |
+ | 4 (2b)   | clk1 (pin 12 of the clock divider) |
+ | 5 (2c)   | connect to pin 12 (1y/r#)          |
+ | 6 (2y)   | w#. connect to RAM's we#           |
+ | 7 (gnd)  | GND                                |
+ | 8 (3y)   | rom# (connect to ROM's ce#)        |
+ | 9 (3a)   | a15 (pin 25 of the CPU)            |
+ | 10 (3b)  | a14 (pin 24 of the CPU)            |
+ | 11 (3c)  | a13 (pin 23 of the CPU)            |
+ | 12 (1y)  | r#. connect to ROM's oe#           |
+ | 13 (1c)  | pin 34 (rwb) of the CPU            |
+ | 14 (vcc) | Vcc                                |
+
+Add the remaining connections on pins 8 through 13 of the 74HC08:
+
+ | Pin      | Connection                              |
+ |----------+-----------------------------------------|
+ | 1 (1a)   | video active (pin 26 of the ATmega328p) |
+ | 2 (1b)   | clk3 (pin 13 of the clock divider)      |
+ | 3 (1y)   | /active_clk3/                           |
+ | 4 (2a)   | low                                     |
+ | 5 (2b)   | low                                     |
+ | 6 (2y)   | NC                                      |
+ | 7 (gnd)  | GND                                     |
+ | 8 (3y)   | ram# (connect to the RAM's ce#)         |
+ | 9 (3a)   | a15 (pin 9 of the 74HC10)               |
+ | 10 (3b)  | a14 (pin 10 of the 74HC10)              |
+ | 11 (4y)  | connect to RAM's oe#                    |
+ | 12 (4a)  | connect to pin 12 of the '10            |
+ | 13 (4b)  | clk1 (pin 12 of the clock divider)/     |
+ | 14 (vcc) | Vcc                                     |
+
+At this point, you should have a computer that can execute boot
+code from ROM and read from and write to RAM. The memory check should
+show there are 48 kilobytes of addressable RAM.
+
+*** I/O
+
+So far, addresses $0000..$bfff map to RAM and addresses
+$e000..$ffff map to ROM. We will use $d000..$dfff for I/O, reserving
+$c000..$cfff for future use. I/O devices each get an address. We
+decode those addresses with 74HC138. Wiring is shown below.
+
+ | Pin      | Connection                 |
+ |----------+----------------------------|
+ | 1 (a0)   | a1 (pin 11 of the CPU)     |
+ | 2 (a1)   | a2 (pin 10 of the CPU)     |
+ | 3 (a2)   | a3 (pin 9 of the CPU)      |
+ | 4 (e1#)  | a13 (pin 11 of the 74HC10) |
+ | 5 (e2#)  | clk3a0                     |
+ | 6 (e3)   | ram# (pin 8 of 74HC08)     |
+ | 7 (y7#)  | NC                         |
+ | 8 (gnd)  | GND                        |
+ | 9 (y6#)  | NC                         |
+ | 10 (y5#) | NC                         |
+ | 11 (y4#) | NC                         |
+ | 12 (y3#) | NC                         |
+ | 13 (y2#) | /io4#/                     |
+ | 14 (y1#) | /io2#/                     |
+ | 15 (y0#) | NC                         |
+ | 16 (vcc) | Vcc                        |
+
+The effect of this is that we have I/O addresses 0 through 7 at
+$d000 through $d007. The rest of the $c000..$dfff range should not be
+used. The way we built it, it contains copies of I/O addresses 0
+through 7, but future versions of the computer may use those addresses
+for other purposes.
+
+To implement the serial protocol for reading from and writing to
+cartridges, add a 74HC161 pre-settable counter. Wiring is shown in the
+table below.
+
+ | Pin      | Connection                                  |
+ |----------+---------------------------------------------|
+ | 1 (mr#)  | high                                        |
+ | 2 (cp)   | ldsercr (pin 5 of the load pulse generator) |
+ | 3 (d0)   | d4 (pin 29 of the CPU)                      |
+ | 4 (d1)   | d5 (pin 28 of the CPU)                      |
+ | 5 (d2)   | d6 (pin 27 of the CPU)                      |
+ | 6 (d3)   | d7 (pin 26 of the CPU)                      |
+ | 7 (cep)  | low                                         |
+ | 8 (gnd)  | GND                                         |
+ | 9 (pe#)  | low                                         |
+ | 10 (cet) | low                                         |
+ | 11 (q3)  | /sda/                                       |
+ | 12 (q2)  | /scl/                                       |
+ | 13 (q1)  | NC                                          |
+ | 14 (q0)  | NC                                          |
+ | 15 (tc)  | NC                                          |
+ | 16 (vcc) | Vcc                                         |
+
+To receive bits from the cartridge wire a 74HC299
+universal shift register like this:
+
+ | Pin       | Connection                                |
+ |-----------+-------------------------------------------|
+ | 1 (s0)    | high                                      |
+ | 2 (oe1#)  | io4# (pin 13 of the I/O selector)         |
+ | 3 (oe2#)  | oe# (pin 11 of the '08)                   |
+ | 4 (i/o6)  | d6 (pin 5 of the serial control register) |
+ | 5 (i/o4)  | d4 (pin 29 of the CPU)                    |
+ | 6 (i/o2)  | d2 (pin 31 of the CPU)                    |
+ | 7 (i/o0)  | d0 (pin 33 of the CPU)                    |
+ | 8 (q0)    | NC                                        |
+ | 9 (mr#)   | high                                      |
+ | 10 (gnd)  | GND                                       |
+ | 11 (dsr)  | /sda from cartridge/                      |
+ | 12 (cp)   | /scl from cartridge/                      |
+ | 13 (i/o1) | d1 (pin 32 of the CPU)                    |
+ | 14 (i/o3) | d3 (pin 30 of the CPU)                    |
+ | 15 (i/o5) | d5 (pin 28 of the CPU)                    |
+ | 16 (i/o7) | d7 (pin 6 of the serial control register) |
+ | 17 (q7)   | NC                                        |
+ | 18 (dsl)  | low                                       |
+ | 19 (s1)   | low                                       |
+ | 20 (vcc)  | Vcc                                       |
+
+Next, add the wiring for the cartridge. The cartridge is a DIP8
+with the following pinout:
+
+ | Pin     | Connection                                                 |
+ |---------+------------------------------------------------------------|
+ | 1 (a0)  | low                                                        |
+ | 2 (a1)  | low                                                        |
+ | 3 (a2)  | low                                                        |
+ | 4 (gnd) | GND                                                        |
+ | 5 (sda) | connect to sda via 1K resistor and directly to '299 pin 18 |
+ | 6 (scl) | connect to scl via 1K resistor                             |
+ | 7 (wp)  | low                                                        |
+ | 8 (vcc) | Vcc                                                        |
+
+At this point, booting the computer without a cartridge inserted
+should result in a "insert cartridge" diagnostic. Booting the computer
+with a cartridge inserted should load and run the program on the
+cartridge.
+
+*** Keyboard
+
+The keyboard works by selecting a row by writing to an I/O
+register, then reading which columns are active in that row from
+another I/O register. We implement the row register using a 74HC574
+flip-flop, wired as show below:
+
+ | Pin      | Connection                                  |
+ |----------+---------------------------------------------|
+ | 1 (oe#)  | low                                         |
+ | 2 (d0)   | d0 (pin 7 of the '299)                      |
+ | 3 (d1)   | d1 (pin 13 of the '299)                     |
+ | 4 (d2)   | d2 (pin 6 of the '299)                      |
+ | 5 (d3)   | d3 (pin 14 of the '299)                     |
+ | 6 (d4)   | d4 (pin 5 of the '299)                      |
+ | 7 (d5)   | d5 (pin 15 of the '299)                     |
+ | 8 (d6)   | d6 (pin 4 of the '299)                      |
+ | 9 (d7)   | d7 (pin 16 of the '299)                     |
+ | 10 (gnd) | GND                                         |
+ | 11 (cp)  | ldkbrow (pin 6 of the load pulse generator) |
+ | 12 (y7)  | /kbdrow7#/                                  |
+ | 13 (y6)  | /kbdrow6#/                                  |
+ | 14 (y5)  | /kbdrow5#/                                  |
+ | 15 (y4)  | /kbdrow4#/                                  |
+ | 16 (y3)  | /kbdrow3#/                                  |
+ | 17 (y2)  | /kbdrow2#/                                  |
+ | 18 (y1)  | /kbdrow1#/                                  |
+ | 19 (y0)  | /kbdrow0#/                                  |
+ | 20 (vcc) | Vcc                                         |
+
+Each of the ouputs (y0..y7) should be connected to the cathode of a
+diode (1N4148, unless you made substitutions). The cathode of the
+diode is usually marked with a band. The anodes of the diodes will be
+connected to the rows of the keyboard.
+
+Here is the wiring for the keyboard column buffer, a 74HC541:
+
+ | Pin       | Connection                              |
+ |-----------+-----------------------------------------|
+ | 1 (oe1#)  | io2# (pin 13 of the I/O selector)       |
+ | 2 (a0)    | /kbcol0#/                               |
+ | 3 (a1)    | /kbcol1#/                               |
+ | 4 (a2)    | /kbcol2#/                               |
+ | 5 (a3)    | /kbcol3#/                               |
+ | 6 (a4)    | /kbcol4#/                               |
+ | 7 (a5)    | /kbcol5#/                               |
+ | 8 (a6)    | /kbcol6#/                               |
+ | 9 (a7)    | /kbcol7#/                               |
+ | 10 (gnd)  | GND                                     |
+ | 11 (b7)   | d7 (pin 9 of the keyboard row register) |
+ | 12 (b6)   | d6 (pin 8 of the keyboard row register) |
+ | 13 (b5)   | d5 (pin 7 of the keyboard row register) |
+ | 14 (b4)   | d4 (pin 6 of the keyboard row register) |
+ | 15 (b3)   | d3 (pin 5 of the keyboard row register) |
+ | 16 (b2)   | d2 (pin 4 of the keyboard row register) |
+ | 17 (b1)   | d1 (pin 3 of the keyboard row register) |
+ | 18 (b0)   | d0 (pin 2 of the keyboard row register) |
+ | 19 (oe2#) | oe# (pin 11 of the '08)                 |
+ | 20 (vcc)  | Vcc                                     |
+
+Connect the a0..a7 inputs to the columns of the
+keyboard, and add 100K ohm resistors to pull them up to 5V.
+
+With this, the computer should be able to detect key presses.
+
+* COMMENT Customization for HTML export.
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
+#+BEGIN_SRC emacs-lisp :exports none
+  ; To generate HTML
+  (let ((org-html-head-include-scripts nil)
+        (org-html-postamble nil)
+        (org-html-style-include-default nil)
+        (org-html-table-default-attributes '()))
+    (org-html-export-to-html))
+#+END_SRC
