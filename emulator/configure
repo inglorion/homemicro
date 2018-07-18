@@ -1,0 +1,24 @@
+#! /bin/sh
+
+xcb_cflags=$(pkg-config --cflags xcb)
+s=$?
+if [ $s -ne 0 ]
+then
+    printf 'Error determining cflags for xcb. Is it installed?\n' >&2
+    exit 1
+fi
+
+xcb_libs=$(pkg-config --libs xcb)
+s=$?
+if [ $s -ne 0 ]
+then
+    printf 'Error determining libs for xcb. Is it installed?\n' >&2
+    exit 1
+fi
+
+printf "# Automatically generated from configure and Makefile.in\n" > Makefile
+sed -e "s%@CFLAGS@%$CFLAGS%g" \
+    -e "s%@LIBS@%$LIBS%g" \
+    -e "s%@XCB_CFLAGS@%$xcb_cflags%g" \
+    -e "s%@XCB_LIBS@%$xcb_libs%g" \
+    < Makefile.in >> Makefile

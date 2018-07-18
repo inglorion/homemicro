@@ -1,0 +1,21 @@
+TARGETS = Makefile hm1000
+OBJECTS = hm1000.o
+
+CFLAGS = @CFLAGS@ @XCB_CFLAGS@
+LIBS = @LIBS@ @XCB_LIBS@
+
+all : $(TARGETS)
+
+clean :
+	-rm $(OBJECTS)
+
+distclean : clean
+	-rm $(TARGETS)
+
+hm1000 : $(OBJECTS)
+	$(CC) $(CFLAGS) -o hm1000 $(OBJECTS) $(LIBS)
+
+hm1000.o : hm1000.c ops.inc
+	$(CC) $(CFLAGS) -c hm1000.c
+
+.PHONY : all clean distclean
