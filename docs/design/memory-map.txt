@@ -1,0 +1,312 @@
+#+TITLE: Memory Map
+
+* Overview
+
+| Start | End  | Type   | Description                   |
+|-------+------+--------+-------------------------------|
+|  0000 | 007f |        | user memory (zero page)       |
+|  0080 | 009f | S      | reserved for system use       |
+|  00a0 | 00af | t      | parameters / temporaries      |
+|  00b0 | 00cf | S      | reserved for system use       |
+|  00d0 | 00df | shadio | shadow locations for I/O      |
+|  00e0 | 00ff | S      | reserved for system use       |
+|  0100 | 01ff | stack  | stack                         |
+|  0200 | 02ff | S      | reserved for system use       |
+|  0300 | 1bff |        | user memory                   |
+|  1c00 | 3fff | v/u    | video / user memory           |
+|  4000 | 5bff |        | user memory                   |
+|  5c00 | 7fff | v/u    | alternate video / user memory |
+|  8000 | bfff |        | user memory                   |
+|  c000 | cfff | R      | reserved for future use       |
+|  d000 | dfff | I/O    | I/O                           |
+|  e000 | ffff | ROM    | ROM                           |
+
+* User-available Ranges
+
+ - 0000..007f (128 bytes, zero page)
+ - 0300..1bff (6400 bytes)
+ - 4000..5bff (7168 bytes)
+ - 8000..bfff (16384 bytes)
+
+This gives a total of 30080 available bytes that are available to user
+programs regardless of video mode. Depending on video mode, more bytes
+will be available.
+
+ - In modes that use color tiles:
+   - 1fe8..1fff (24 bytes)
+   - 5fe8..5fff (24 bytes)
+ - In modes that do not use color tiles:
+   - 1c00..1fff (1024 bytes)
+   - 5c00..5fff (1024 bytes)
+
+ - In graphics modes:
+   - 3f40..3fff (192 bytes)
+   - 7f40..7fff (192 bytes)
+ - In text modes:
+   - 23e8..27ff (1048 bytes)
+   - 63e8..67ff (1048 bytes)
+   - When not using lower RAM character set:
+     - 2800..3fff (2048 bytes)
+   - When not using upper RAM character set:
+     - 6800..7fff (2048 bytes)
+
+ - When not using the alternate graphics area:
+   - 5c00..7fff (9216 bytes)
+
+To maximize free RAM, use a text mode with the ROM character set, no
+color tiles, and no alternate graphics. This frees up the ranges
+1c00..1fff (1024 bytes), 23e8..3fff (7192 bytes), and 5c00..7fff (9216
+bytes), for a total of 47512 freely available bytes.
+
+* 0080..00ff system (zero page)
+
+These locations have special significance to the system. With the
+exception of the locations listed below, user programs should not
+write to or read from these addresses.
+
+Locations in this range that are accessible to user programs:
+
+ - $a0..$af :: Parameters and temporaries. These are used to pass
+               values to functions. User code may freely overwrite
+               values stored here. Values are not preserved accross
+               procedure calls; that is, user programs cannot rely on
+               values stored in these locations still being present
+               after calling system procedures.
+
+| Addr | Size | Name    | Description                      |
+|------+------+---------+----------------------------------|
+| 80   |    2 | CURPOS  | position to write next character |
+| 82   |    2 | PUTCPTR | function to render character     |
+| d1   |    1 | VMODEV  | value of video mode register     |
+| d5   |    1 | SERCRV  | value of serial control register |
+
+* 0200..02ff system
+
+Known locations in this range:
+
+| Addr | Size | Name    | Description                    |
+|------+------+---------+--------------------------------|
+| 0200 |    3 | IRQCODE | code executed on IRQ           |
+| 0203 |    3 | NMICODE | code executed on NMI           |
+| 021e |    2 | RAMTOP  | highest RAM address            |
+| 0220 |    8 | KBSTATE | state of keyboard keys         |
+| 0240 |   64 | BUF     | buffer used by put* procedures |
+
+* 1c00..3fff video memory
+
+The following ranges may hold data that will be displayed on screen.
+When not used for that purpose, they can freely be used by user
+programs.
+
+ - $1c00..$1fe7 :: Color tiles. When color tiles are enabled and
+                   alternate video is disabled, color tiles are read
+                   from this range.
+ - $2000..$23e7 :: Text. In character modes with alternate video
+                   disabled, this range specifies which characters are
+                   to be displayed.
+ - $2000..$3f3f :: Pixel data. In graphics modes with alternate video
+                   disabled, this range holds the pixel data.
+ - $2800..$2fff :: Lower RAM character set. This can be used in character
+                   mode to define a custom character set. 
+
+* 5c00..7fff alternate video memory
+
+  The layout of this range is the same as that of 1c00..3fff. It is
+  used for video when the alternate video bit is set.
+
+* c000..cfff reserved
+
+Addresses in this range are reserved and must not be read from or
+written to. Doing so is likely to have unwanted side effects.
+
+* d000..dfff I/O
+
+Reading or writing any address in the I/O range not listed in the
+table below is likely to have unwanted side effects. The same is true
+for reading an address that is marked as write in the table, or
+writing an address that is marked as read. In addition, some I/O
+registers have shadow locations (in the $d0..$df range) and should be
+written through those for correct system operation.
+
+| Addr | Name    | R/W | Description             |
+|------+---------+-----+-------------------------|
+| d001 | VMODE   | w   | video mode              |
+| d002 | KBDCOL  | r   | keyboard column         |
+| d003 | KBDROW  | w   | keyboard row selector   |
+| d004 | SERIR   | r   | serial input register   |
+| d005 | SERCR   | w   | serial control register |
+| d006 | STATUS  | r   | machine status          |
+| d007 |         |     |                         |
+| d008 | STICKA  | r   | joystick a              |
+| d009 |         |     |                         |
+| d00a | STICKB  | r   | joystick b              |
+| d00b |         |     |                         |
+| d00c |         |     |                         |
+| d00d | COLOR01 | w   | colors 0 and 1          |
+| d00e |         |     |                         |
+| d00f | COLOR23 | w   | colors 2 and 3          |
+
+
+* e000..ffff ROM
+
+ - $e000..$e002 :: feature bits
+ - $e800..$ebff :: default font (128 characters)
+ - $fffa..$fffb :: NMI handler address
+ - $fffc..$fffd :: reset handler address
+ - $fffe..$ffff :: IRQ handler address
+
+** ROM procedures
+
+A number of procedures are built into the ROM. These can be accessed
+by executing a jsr to a known address. The addresses are:
+
+| Addr | Name      | Description                                      |
+|------+-----------+--------------------------------------------------|
+| e003 | cls       | clear screen                                     |
+|      | showchr   | display one character                            |
+|      | show      | display a number of bytes                        |
+|      | showint   | display a signed integer                         |
+|      | showuint  | display an unsigned integer                      |
+|      | setcur    | set cursor positon                               |
+|      | col0      | return cursor to beginning of line               |
+|      | newline   | advance cursor to beginning of next line         |
+|      | showspc   | shows a space                                    |
+|      | showdigit | shows a digit (0-9a-z)                           |
+|      | scrollup  | scroll screen up a number of lines               |
+|      | qkbrow    | read keyboard row                                |
+|      | pollkey   | read key press, if any                           |
+|      | pollchr   | if key pressed, return its character code        |
+|      | waitkey   | wait until key pressed and read it               |
+|      | waitchr   | wait until key pressed and return character code |
+|      | shiftchr  | translates a character to its shifted equivalent |
+|      | cpy       | copy bytes                                       |
+|      | wait      | wait some time                                   |
+|      | twisendb  | send a byte                                      |
+|      | twistart  | start a twi transmission                         |
+|      | twistop   | stop a twi transmission                          |
+|      | twigetb   | receive a byte over twi                          |
+|      | twiack    | send an acknowledgment over twi                  |
+|      | twinak    | send a negative acknowledgment over twi          |
+|      | loadcart  | load bytes from cartridge                        |
+|      | savecart  | save bytes to cartridge                          |
+|      | rand      | generates a pseudorandom number                  |
+|      | srand     | seeds the pseudorandom number generator          |
+
+#+BEGIN_COMMENT
+Candidates:
+cmp16
+cpy8
+putchr
+putdigit
+putint
+putuint
+setvmode
+sbc16
+sub16
+#+END_COMMENT
+
+* Design Notes
+
+ : rom# = nand a15 a14 a13         ($e000..$ffff)
+ : ram# = and a15 a14              ($0000..$bfff)
+ : spece1# = a13
+ : spece2# = 0
+ : spece3 = ram#
+
+Available time: 139ns.
+ - 70ns ROM access time. Remaining: 69ns.
+ - 25ns CPU bus enable time.
+ - Note:
+   * 245 has 38ns enable/disable time.
+   * 541: 40ns.
+   * 125: 31ns.
+   * 157: 31ns selection time.
+ - 12ns set-up time. TODO: For what?
+Remaining: 69 - 38 = 31ns if using '245.
+
+74HC08 has max 25ns propagation delay at 125C.
+74HC08 has max 23ns propagation delay at 85C.
+74HC10 has max 24ns propagation delay at 85C.
+74HC138 has max 38ns propagation delay at 85C
+  - but we won't need the 70ns access time.
+
+RAM's oe# goes low after a '10 and a '08 delay. After that, we need
+30ns. That fits, too.
+
+Write cycle should be gated on CPU active, so gets two '10 delays: one
+to determine r#, and one to determine w#. It needs 55ns after that.
+Should fit.
+
+So this actually allows us 4 bus phases with HC parts.
+
+
+* Extended RAM
+
+Not yet implemented.
+
+Use $c000..$cfff to access RAM whose upper bits are set by a
+flip-flop. 4K plus 8 bits flip-flop allows up to 1M of RAM.
+
+Wiring for ram# becomes:
+
+ : ram# = and a15 a14 (or a13 a12)
+
+Flip-flop or a12..a15 is selected through
+
+ : extram = and a15 a14
+
+This means the flip-flop is selected when ROM or I/O is being
+accessed, but if we only use the flip-flop to feed to RAM, this
+doesn't cause problems.
+
+ - 74HC04 has 21ns propagation delay at 85C.
+ - 74HC08 has 23ns propagation delay at 85C.
+ - 74AC08 has 8.5ns propagation delay at 85C.
+ - 74HC10 has 24ns propagation delay at 85C.
+ - 74HC11 has 25ns propagation delay at 85C.
+ - 74HC32 has 23ns propagation delay at 85C.
+ - 74AC32 has 8.5ns propagation delay at 85C.
+ - 74HC157 has 31ns propagation delay at 85C (for selection and input).
+ - 74AC157 has 10ns propagation delay at 85C (for selection and input).
+
+Use 08+32, 08 for ram#.
+
+So the address takes 23 + 31 = 54ns to be valid.
+ram# takes 23 + 23 = 46ns to select.
+
+We had only 32ns with 70ns RAM. With 55ns RAM we would have 47ns,
+so we're just fast enough to select RAM, but too slow on the address.
+
+With AC08:
+ : address: 9 + 31 = 40ns.
+ : ram#: 23 + 9 = 32ns.
+
+With AC08 and AC157, we get down to:
+: address: 9 + 10 = 19ns.
+: ram#: 23 + 9 = 32ns.
+
+Making the '32 an AC part, too, gets ram# down to 18ns.
+
+Alternatively, could us an AC245 instead of an HC245. 10.5ns instead
+of 38ns. Increases budget from 31ns to 58ns. But CPU still needs 25ns,
+so more like 31ns to 44ns.
+
+Faster:
+
+ : hi = and a15 a14              (23)
+ : noram = or a13 a12            (23)
+ : 
+ : ram# = and hi noram           (23 + 23 = 46)
+
+Slower:
+
+ : rom# = nand a15 a14 a13       (24)
+ : hi = and a15 a14              (23)
+ : a12# = not a12                (21)
+ : 
+ : hiram# = nand rom# hi a12#    (24 + 24 = 48)
+ : 
+ : ram# = and hi hiram#          (23 + 48 = 71)
+
+* COMMENT Customization for HTML export.
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="../style.css" />
