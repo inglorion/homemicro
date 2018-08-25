@@ -1,6 +1,6 @@
 #define KBDCOL $d002
 #define KBDROW $d003
-        cls = $e002
+        cls = $e003
         
 * = $0000
         .byt "HM",0,1
@@ -175,7 +175,7 @@ putchar_raw:
         rol
         and #7
         clc
-        adc #$f4
+        adc #$e8
         sta $b
         tya
         and #$f8

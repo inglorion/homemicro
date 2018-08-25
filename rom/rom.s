@@ -1,5 +1,5 @@
         CURPOS = $80
-        FONTBASE = $f400
+        FONTBASE = $e800
         IOBASE = $d000        
         IRQHNDLR = $0200
         NMIHNDLR = $0204
@@ -9,7 +9,7 @@
         SERCR = $d005
 
 * = ROMBASE
-        .byt $01, $00
+        .byt $01, $00, $00
         jmp cls
         .dsb FONTBASE-*, $ff
 _charset:

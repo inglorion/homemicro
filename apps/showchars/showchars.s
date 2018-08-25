@@ -1,4 +1,4 @@
-        cls = $e002
+        cls = $e003
         
 * = $0000
         .byt "HM",0,1
@@ -18,7 +18,7 @@ _start:
         sta $82
         lda #$20
         sta $81
-        lda #$f4
+        lda #$e8
         sta $83
 main_loop:
         jsr cpy8
@@ -28,7 +28,7 @@ main_loop:
         sta $82
         lda #0
         adc $83
-        cmp #$f8
+        cmp #$ec
         beq _end
         sta $83
 
