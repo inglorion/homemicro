@@ -1,0 +1,134 @@
+128 characters.
+
+;;; Characters:
+;;; 00 U+2022 bullet
+;;; 01 U+25E2 lower right triangle
+;;; 02 U+25E3 lower left triangle
+;;; 03 U+00A9 copyright sign
+;;; 04 U+2660 spade suit
+;;; 05 U+2661 heart suit
+;;; 06 U+2662 diamond suit
+;;; 07 U+2663 club suit
+;;; 08        brick wall
+;;; 09 U+03A9 capital omega
+;;; 0a U+00D7 multiplication sign
+;;; 0b U+2500 horizontal line
+;;; 0c U+2264 less-than or equal to
+;;; 0d U+2260 not equal to
+;;; 0e U+2265 greater-than or equal to
+;;; 0f U+00F7 division sign
+;;; 10 U+00B0 degree symbol
+;;; 11 U+00B1 plus-minus sign
+;;; 12 U+2514 up and right line
+;;; 13 U+2510 down and left line
+;;; 14 U+250c down and right line
+;;; 15 U+2518 up and left line
+;;; 16 U+251c vertical and right line
+;;; 17 U+252c down and horizontal line
+;;; 18 U+2524 vertical and left line
+;;; 19 U+2534 up and horizontal line
+;;; 1a U+253c vertical and horizontal line
+;;; 1b U+03BC small mu
+;;; 1c U+2191 upwards arrow
+;;; 1d U+2193 downwards arrow
+;;; 1e U+2190 leftwards arrow
+;;; 1f U+2192 rightwards arrow
+;;; 7f U+00A3 pound sign
+
+Start with ASCII 32 through 126.
+That leaves 33 codes unassigned.
+
+13 symbols. 20 left.
+copyright symbol. 19 left.
+mu, omega. 17 left.
+
+10 lines. 7 left.
+4 arrows. 3 left.
+brick wall. 2 left.
+2 slopes. 0 left.
+
+or:
+
+10 lines. 7 left.
+7 matrices. 0 left.
+
+Character classes considered:
+
+Semigraphics:
+
+In general, semigraphics are not super valuable, because we
+could just use actual graphics - or redefine characters when
+in character mode. What they do buy us is some crude character
+graphics that can be used without needing to dedicate 2K of
+RAM to a custom character set.
+
+ - 2x2 matrices: This would take up 8 code points (the other 8 are
+   inverted versions). We can reuse space as one of them, which
+   reduces the number of code points to 7.
+ - Lines. We have pipe character as vertical line. Beyond
+   that, we need horizontal line, 4 corners, 4 Ts, and a cross,
+   for a total of 10 code points.
+ - Slopes. Up slope and down slope, 2 code points.
+ - Shades. 1 code point for medium shade. Could have 1/4th as well.
+   No need for 3/4 as that could be obtained by inverting 1/4th.
+   But ideally you'd also want combinations of those and blank
+   or filled glyphs, which really blows up the code points.
+ - Curves. Probably don't work well with 4x8 mode.
+ - Brick wall.
+ - Ladder.
+ - 2 staircases (left and right). Or re-use matrices.
+ - Window.
+ - Door.
+ - Person.
+ - Ball.
+ - Circle.
+
+Icons:
+ - 4 arrows: up, down, left, right.
+
+Symbols:
+
+These seem very valuable. The only caveat is that not all of them
+can be expressed well in the 4x8 wide pixel mode. I will include
+those that can.
+
+ - Degree symbol.
+ - Pound sign.
+ - Less or equal, greater or equal.
+ - Unequal.
+ - Multiplication.
+ - Division.
+ - Bullet point.
+ - 4 card suits: spades, hearts, diamonds, clubs.
+ - Plusminus.
+ - Copyright symbol.
+
+Probably not:
+ - Trademark.
+ - Registered trademark.
+ - Superscript 2, 3.
+ - Fractions: 1/2, 1/3, 2/3, 1/4, 3/4.
+ - Logical not.
+ - Set symbols: union, intersection.
+ - Exists, forall.
+ - Cent.
+ - Yen.
+ - Section.
+ - Paragraph.
+ - Square root.
+ - Checkmark.
+
+Accented letters:
+
+I have no current plans to support languages other than English,
+so this doesn't seem super valuable.
+
+Greek letters:
+
+Although not adding the full Greek alphabet, there are a few letters
+which are pretty useful even in non-Greek text:
+
+ - Lowercase mu (used to denote micro).
+ - Lowercase omega (used to denote Ohms).
+ - Delta (used to denote difference).
+ - Uppercase sigma (used to denote summation).
