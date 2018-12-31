@@ -1,0 +1,14 @@
+Home Micro provides a series of microcomputers that can be built by
+hand using electronics parts that are currently in
+production. Parts lists, assembly instructions, design notes, software
+tools, an emulator, and full source code are provided, as well as a
+number of sample applications.
+
+Home Micro was inspired by late 1970s and early 1980s home computers
+such as the Apple II, Atari 8-bit series, Commodore 64, ZX80 and ZX
+Spectrum. With relatively modest hardware capabilities and cost, these
+computers allowed generations of enthusiasts to create some very
+impressive software. Home Micro enables the construction of a computer
+with roughly similar capabilities from parts that are currently being
+manufactured and sold.
+

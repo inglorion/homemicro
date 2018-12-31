@@ -1,4 +1,29 @@
 The Home Micro project - build your own microcomputer at home!
 
+Home Micro provides a series of microcomputers that can be built by
+hand using electronics parts that are currently in
+production. Parts lists, assembly instructions, design notes, software
+tools, an emulator, and full source code are provided, as well as a
+number of sample applications.
+
+This README file is intended to be a concise guide to what is
+where. For a more elaborate introduction to the project, refer to
+docs/intro.txt.
+
+This repository contains the following directories:
+
+ - apps :: source code for applications to run on the computer
+
+ - docs :: documentation, such as assembly instructions and design
+   notes
+
+ - emulator :: an emulator that allows Home Micro software to be
+   run and tested on more powerful computers
+
+ - rom :: source code for the ROM image
+
+ - tools :: programs to help develop the computer or its software,
+   e.g. by writing a ROM image to the ROM chip
+
 The project is made available under the terms of the MIT license. The
 text of this license can be found in the file LICENSE.
