@@ -27,3 +27,24 @@ This repository contains the following directories:
 
 The project is made available under the terms of the MIT license. The
 text of this license can be found in the file LICENSE.
+
+To build the code, you will need the following software:
+
+ - make :: to use the Makefiles
+ - C compiler :: for the tools and the emulator
+ - avr-as :: to build the AVR code
+ - xa :: to assemble the 6502 code
+ - xcb :: to build the emulator
+
+On Raspbian, you can install these by running:
+
+ : aptitude install binutils-avr gcc make xa65 libxcb1-dev
+
+In general, the code can be built by cd'ing into the directory that
+contains the configure script or the Makefile. In case of a configure
+script, you can then run ./configure to create the Makefile. When
+the Makefile is present, you can run make to build the software. make
+clean will remove generated files except the final targets, and make
+distclean will remove all generated files.
+
+
