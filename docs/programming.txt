@@ -1,0 +1,97 @@
+#+TITLE: Home Micro Programmer's Manual
+
+* Register and Memory Usage
+
+ - Freely available to user programs:
+   - $00 through $7f.
+   - $300 through $17ff.
+   - $4000 through $57ff.
+   - $8000 through $bfff.
+
+ - Available, but not preserved by ROM procedures:
+   - Registers a, x, and y.
+   - Memory locations $a0 through $af.
+
+ - Available when not used for video (see [Video Modes] for details):
+   - $1800 through $3fff.
+   - $5800 through $7fff.
+
+ - Reserved memory ranges:
+   - $80 through $9f.
+   - $b0 through $ff.
+   - $200 through $2ff.
+   - $c000 through $dfff.
+
+ - ROM:
+   - $e000 through $ffff.
+
+* Video Modes
+
+| Mode | Bit/Char  |  Pixels | Colors | Tiles |
+|------+-----------+---------+--------+-------|
+|    0 | bitmap    | 320x200 |      2 | no    |
+|    1 | bitmap    | 160x200 |      4 | no    |
+|    2 | bitmap    | 320x200 |      2 | yes   |
+|    3 | bitmap    | 160x200 |      4 | yes   |
+|    4 | character | 320x200 |      2 | no    |
+|    5 | character | 160x200 |      4 | no    |
+|    6 | character | 320x200 |      2 | yes   |
+|    7 | character | 160x200 |      4 | yes   |
+|    - |           |         |        |       |
+|    9 | character | 160x200 |     16 | no    |
+
+** Memory Usage
+
+ - Color tiles enabled (modes 2, 3, 6, 7):
+   - $1800..$1be7
+   - Alternate: $5800..$5be7
+
+ - Bitmap modes (modes 0..3):
+   - $2000..$3f3f.
+   - Alternate: $6000..$7f3f.
+
+ - Character modes (modes 4..9):
+   - $2000..$23e7.
+   - Alternate: $6000..$63e7.
+
+ - Custom character set:
+   - Lower: $2800..$2fff.
+   - Upper: $6800..$6fff.
+
+** Memory Layout
+
+In bitmap mode:
+
+|-------+-------+-------+------+-------|
+| $2000 | $2008 | $2010 | .... | $2138 |
+| $2001 | $2009 | $2011 | .... | $2139 |
+| $2002 | $200a | $2012 | .... | $213a |
+| $2003 | $200b | $2013 | .... | $213b |
+| $2004 | $200c | $2014 | .... | $213c |
+| $2005 | $200d | $2015 | .... | $213d |
+| $2006 | $200e | $2016 | .... | $213e |
+| $2007 | $200f | $2017 | .... | $213f |
+|-------+-------+-------+------+-------|
+| $2140 | $2148 | $2150 | .... | $2278 |
+| $2141 | $2149 | $2151 | .... | $2279 |
+| ....  | ....  | ....  | .... | ....  |
+| $2147 | $214f | $2157 | .... | $227f |
+|-------+-------+-------+------+-------|
+| ....  | ....  | ....  | .... | ....  |
+|-------+-------+-------+------+-------|
+| $3e00 | $3e08 | $3e10 | .... | $3f38 |
+| ....  | ....  | ....  | .... | ....  |
+| $3e07 | $3e0f | $3e17 | .... | $3f3f |
+|-------+-------+-------+------+-------|
+
+In character mode:
+
+|-------+-------+-------+------+-------|
+| $2000 | $2001 | $2002 | .... | $2027 |
+|-------+-------+-------+------+-------|
+| $2028 | $2029 | $202a | .... | $202f |
+|-------+-------+-------+------+-------|
+| ....  | ....  | ....  | .... | ....  |
+|-------+-------+-------+------+-------|
+| $23c0 | $23c1 | $23c2 | .... | $23e7 |
+|-------+-------+-------+------+-------|
