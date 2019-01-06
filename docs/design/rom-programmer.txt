@@ -1,0 +1,182 @@
+#+TITLE: ROM Programmer
+
+# -*- truncate-lines: t -*-
+
+TODO: Add protection against '245 driving the data bus when this is not intended.
+
+* Overview
+
+A short summary of the circuit:
+
+ - Except ROM's Vdd pin, everything operates at 3.3V. ROM needs 5V supply,
+   but the Raspberry Pi's GPIO pins can only handle 3.3V, hence the need
+   for both voltages.
+
+ - The '245 should be able to operate at 3.3V while receiving 5V
+   inputs. The 74LVC245 can do this. A 74LVT245 should work, too.
+
+ - ROM's Vdd receives 5V from one of the Raspberry Pi's 5V pins. There is a
+   switch to allow ROM to be powerd down for insertion and removal.
+
+ - Raspberry Pi GPIO 10 through 24 are connected to ROM's A0 through A14,
+   enabling 32,768 bytes of ROM to be addressed. Any remaining address pins
+   on the ROM IC are wired to ground.
+
+ - Raspberry Pi GPIO pins 2 through 9 are used to transfer data bytes, but
+   they can't connect to ROM directly because run runs at 5V and this may
+   damage the Raspberry Pi. So they are connected through a '245 which
+   operates at 3.3V, a safe voltage for the Pi.
+
+ - GPIO 0 controls CE#.
+
+ - GPIO 1 controls WE#.
+
+ - GPIO 27 controls OE# and the DIR pin of the '245. When GPIO 27 is low,
+   ROM's OE# is enabled and the '245 samples its B pins and drives its A pins.
+   When GPIO 27 is high, ROM's OE# is disabled and the '245 samples its A pins
+   and drives its B pins.
+
+ - Because the '245 gets its Vcc from a 3.3V pin, its output high
+   voltage should be in the 2.0V to 3.3V range - high enough for the
+   ROM's inputs (which require at least 2.0V), but low enough for the
+   Raspberry Pi (which requires at most 3.3V).
+
+* Schematic
+
+
+#+BEGIN_EXAMPLE
+/--------------------------------------------------------------------------------------------\
+|         /------------------------------------------------------\                           |
+|         | /------------------------------------------------\   |                           |
+|         | |   /--------------------------------------------|-\ |                           |
+|         | |   |   /--------------------------------------\ | | |                           |
+|         | |   |   | /----------------------------------\ | | | |                           |
+|         | |   |   | |                            /-----|-|-|-|-|---------------------------|-\
+|         | |   |   | |                            | /---|-|-|-|-|-------------------------\ | |
+|         | |   |   | |                    /       | | /-|-|-|-|-|-----------------------\ | | |
+|         | |   |   | |                /--/  ------|-|-|-|-|-|-|-|---------------------\ | | | |
+|         | |   |   | |                |           | | | | | | | | /-----------------\ | | | | |
+|         | |   |   | | |--RPi GPIO--| |     /-----/ | | | | | | | |                 | | | | | |
+|         | |   |   | | | 3.3V |  5V |-/     | /-----/ | | | | | | |                 | | | | | |
+|   /-----|-|---|---|-|-|    2 |  5V |       | |       | | | | | | | |-SST39SF040--| | | | | | |
+|   | /---|-|---|---|-|-|    3 | GND |-------|-|-------|-|-|-|-|-|-+-| A18  |  Vdd |-|-/ | | | |
+|   | | /-|-|---|---|-|-|    4 |  14 |-------|-|---\   | | | | | | \-| A16  |  WE# |-|---/ | | |
+|   | | | | |   |   | | |  GND |  15 |-------|-|-\ | /-|-|-|-|-|-|---| A15  |  A17 |-/     | | |
+|   | | | | \---|---|-|-|   17 |  18 |-------|-/ | | | | | | | | \---| A12  |  A14 |-------|-|-|-------\
+| /-|-|-|-|-----|---|-|-|   27 | GND | /-----/   | | | | | | \-|-----|  A7  |  A13 |-------|-|-/       |
+| | | | | \-----|---|-|-|   22 |  23 |-/ /-------|-|-|-|-|-|---|-----|  A6  |   A8 |-------/ |         |
+| | | | |       | /-|-|-| 3.3V |  24 |---|----\  \-|-|-|-|-|---|-----|  A5  |   A9 |---------/         |
+| | | | |       | | | \-|   10 | GND |   |     \   \-|-|-|-|---|-----|  A4  |  A11 |-----------------\ |
+| | | | |     /-|-|-|---|    9 |  25 |---|-----|-----/ | | |   \-----|  A3  |  OE# |---------------\ | |
+| | | | |     | | | \---|   11 |   8 |---|---\ |       | | | /-------|  A2  |  A10 |-------------\ | | |
+| | | | |     | | |     |  GND |   7 |---|-\ | |       | | \-|-------|  A1  |  CE# |-----------\ | | | |
+| | | | |     | | |     |------+-----|   | | | |       | \---|-------|  A0  |  DQ7 |---------\ | | | | |
+| | | | |     | | | /---|    0 |   1 |---|-|-|-|-------/     | /-----| DQ0  |  DQ6 |-------\ | | | | | |
+| | | | | /---|-|-|-|---|    5 | GND |   | | | |             | | /---| DQ1  |  DQ5 |-----\ | | | | | | |
+| | | | | | /-|-|-|-|---|    6 |  12 |---|-|-|-|-------------/ | | /-| DQ2  |  DQ4 |---\ | | | | | | | |
+| | | | | | | | \-|-|---|   13 | GND |---|-|-|-|---------------|-|-|-| Vss  |  DQ3 |-\ | | | | | | | | |
+\-|-|-|-|-|-|-|---|-|---|   19 |  16 |---/ | | |               | | |                 | | | | | | | | | |
+  | | | | | | |   | |   |   26 |  20 |-----|-|-|---------------|-|-|-----------------|-|-|-|-|-|-/ | | |
+  | | | | | | |   | | /-|  GND |  21 |-----|-|-|---------------|-|-|-----------------|-|-|-|-|-|---|-/ |
+  | | | | | | |   | | |                    | | \---------------|-|-|-----------------|-|-|-|-|-|---|---/
+  | | | | | | |   | | +--------------------|-|-\               | | |                 | | | | | |   |
+  | | | | | | |   | \-|--------------------|-|-|---------------|-|-|-----------------|-|-|-|-|-/   |
+  | | | | | | |   |   | /------------------|-|-|---------------/ | |                 | | | | |     |
+  | | | | | | |   |   | | /----------------|-|-|-----------------/ |                 | | | | |     |
+  | | | | | | |   |   | | | /--------------|-|-|-------------------/                 | | | | |     |
+  | | | | | | |   |   | | | | /------------|-|-|-------------------------------------/ | | | |     |
+  | | | | | | |   |   | | | | | /----------|-|-|---------------------------------------/ | | |     |
+  | | | | | | |   |   | | | | | | /--------|-|-|-----------------------------------------/ | |     |
+  | | | | | | |   |   | | | | | | | /------|-|-|-------------------------------------------/ |     |
+  | | | | | | |   |   | | | | | | | | /----|-|-|---------------------------------------------/     |
+  | | | | | | |   \-\ | | | | | | | | |    | | |                                                   |
+  | | | | | | |     | | | | | | | | | |    | | |                                                   |
+  | | | | | | |  |----------------------|  | | |                                                   |
+  | | | | | | |  |  V O B B B B B B B B |  | | |                                                   |
+  | | | | | | |  |  c E 0 1 2 3 4 5 6 7 |  | | |                                                   |
+  | | | | | | |  |' c #                 |  | | |                                                   |
+  | | | | | | |  |2                     |  | | |                                                   |
+  | | | | | | |  |4 D                 G |  | | |                                                   |
+  | | | | | | |  |5 I A A A A A A A A N |  | | |                                                   |
+  | | | | | | |  |  R 0 1 2 3 4 5 6 7 D |  | | |                                                   |
+  | | | | | | |  |----------------------|  | | |                                                   |
+  | | | | | | |     | | | | | | | | | |    | | |                                                   |
+  | \-|-|-|-|-|-----|-/ | | | | | | | \----|-|-/                                                   |
+  |   \-|-|-|-|-----|---/ | | | | \-|------|-/                                                     |
+  |     \-|-|-|-----|-----/ | | \---|------/                                                       |
+  |       \-|-|-----|-------/ |     |                                                              |
+  |         \-|-----|---------/     |                                                              |
+  |           \-----|---------------/                                                              |
+  \-----------------+------------------------------------------------------------------------------/
+#+END_EXAMPLE
+
+* Connections
+
+** Raspberry Pi Pins
+
+Note: Raspberry Pi pins are numbered in a different order than IC pins.
+With the 5V pins in the top right and GND pin in the bottom left, the
+numbering is
+
+|  1 |  2 |
+|  3 |  4 |
+| .. | .. |
+| 39 | 40 |
+
+| Pin | Function | Connect To           |
+|-----+----------+----------------------|
+|   1 | 3.3V     | -                    |
+|   2 | 5V       | ROM Vdd, via switch  |
+|   3 | GPIO2    | '245 A0              |
+|   4 | 5V       | -                    |
+|   5 | GPIO3    | '245 A1              |
+|   6 | GND      | -                    |
+|   7 | GPIO4    | '245 A2              |
+|   8 | GPIO14   | ROM A4               |
+|   9 | GND      | -                    |
+|  10 | GPIO15   | ROM A5               |
+|  11 | GPIO17   | ROM A7               |
+|  12 | GPIO18   | ROM A8               |
+|  13 | GPIO27   | ROM OE# and '245 DIR |
+|  14 | GND      | -                    |
+|  15 | GPIO22   | ROM A12              |
+|  16 | GPIO23   | ROM A13              |
+|  17 | 3.3V     | '245 Vcc             |
+|  18 | GPIO24   | ROM A14              |
+|  19 | GPIO10   | ROM A0               |
+|  20 | GND      | -                    |
+|  21 | GPIO9    | '245 A7              |
+|  22 | GPIO25   | -                    |
+|  23 | GPIO11   | ROM A1               |
+|  24 | GPIO8    | '245 A6              |
+|  25 | GND      | -                    |
+|  26 | GPIO7    | '245 A5              |
+|  27 | GPIO0    | ROM CE#              |
+|  28 | GPIO1    | ROM WE#              |
+|  29 | GPIO5    | '245 A3              |
+|  30 | GND      | -                    |
+|  31 | GPIO6    | '245 A4              |
+|  32 | GPIO12   | ROM A2               |
+|  33 | GPIO13   | ROM A3               |
+|  34 | GND      | ROM Vss              |
+|  35 | GPIO19   | ROM A9               |
+|  36 | GPIO16   | ROM A6               |
+|  37 | GPIO26   | -                    |
+|  38 | GPIO20   | ROM A10              |
+|  39 | GND      | '245 OE# and GND     |
+|  40 | GPIO21   | ROM A11              |
+
+** Data Bus
+
+Connect ROM's A0 through A7 to the '245's B0 through B7.
+
+* COMMENT Customization for HTML export.
+#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="../style.css" />
+#+BEGIN_SRC emacs-lisp :exports none
+  ; To generate HTML
+  (let ((org-html-head-include-scripts nil)
+        (org-html-postamble nil)
+        (org-html-style-include-default nil)
+        (org-html-table-default-attributes '()))
+    (org-html-export-to-html))
+#+END_SRC
