@@ -31,6 +31,22 @@ the components. The computer can be built on a breadboard (it fits on
 a 3220 tie-point board) or using wire-wrap. Printed circuit board
 would also be possible, but no PCB layout is available yet.
 
+A number of parts contain flash memory that must be programmed. For this,
+an appropriate programming circuit is required. The recommended way to
+go about this is to use a Raspberry Pi with GPIO headers. The software
+tools in the Home Micro project can use the Raspberry Pi's GPIO pins
+along with simple circuits to program the Flash chip for the ROM and
+the I2C EEPROMs used as cartridges. The AVRDUDE utility
+(http://www.nongnu.org/avrdude/) can be used to program the AVR
+microcontroller with a simple circuit connected to a Raspberry Pi.
+
+ - To program the ROM, you can use
+   - The circuit at [[./design/rom-programmer.txt]].
+   - The program in [[../tools/memory/writerom.c]].
+ - To program cartridges, you can use
+   - The circuit at [[./design/cartridge-programmer.txt]].
+   - The program in [[../tools/cartridge/writecart.c]].
+
 *** Substitutions
 
 In many cases, other parts can be substituted for the ones listed
