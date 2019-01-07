@@ -55,10 +55,10 @@ th {
     text-transform: uppercase;
 }
 
-tbody tr:nth-child(even) {
+tr:nth-child(even) {
     background: #ffffff;
 }
 
-tbody tr:nth-child(odd) {
+tr:nth-child(odd) {
     background: #dddddd;
 }
