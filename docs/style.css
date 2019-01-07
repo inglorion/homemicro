@@ -1,9 +1,10 @@
 body {
-    font-family: "Nimbus Sans", "Nimbus Sans L", Helvetica, sans-serif;
+    font-family: "FreeSans", "Roboto", "Nimbus Sans", "Nimbus Sans L", sans-serif;
     font-size: 14pt;
     margin: 10%;
     color: #000000;
     background-color: #ffffff;
+    text-align: justify;
 }
 
 em {
