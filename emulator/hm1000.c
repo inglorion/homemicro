@@ -11,11 +11,17 @@
 // [x] Display graphics.
 // [ ] Handle window close.
 // [ ] Turn instructions into a table.
-// [ ] Change timing to ticks. 14.31818 million ticks per second.
+// [x] Change timing to ticks. 14.31818 million ticks per second.
 //     This allows simulated time.
 
-/// Nanoseconds per clock cycle.
-#define CYCLE_NS 559
+/// To avoid spending excessive CPU time on sleep system calls, we
+/// synchronize real time to clock cycles in steps of 32.
+#define TIME_STEP_TICKS 32
+
+/// Nanoseconds per time step. This is rounded, but within 50ppm of
+/// what the value should nominally be. Since real world crystals don't
+/// generate their exact nominal frequency either, this should be fine.
+#define TIME_STEP_NS 17879
 
 /// Start of memory-mapped I/O.
 #define IO_BASE 0xd000
@@ -159,28 +165,37 @@ struct hm1k_state_s {
   hm1k_write_byte_fn io_write[0x1000];
   uint8_t kbdrow, sercr, serir, twi_addr, twi_status;
   uint8_t keyboard[8];
-  /* struct timespec target_time; */
+  struct timespec last_sync;
+  unsigned long ticks;
 };
 
 typedef void (*hm1k_op) (hm1k_state *s, uint8_t op);
 
-static void add_ticks(struct timespec *ts, unsigned long ticks) {
-  unsigned long new_nsec = ts->tv_nsec + ticks * CYCLE_NS;
-  if (new_nsec < 1000000000UL) {
-    ts->tv_nsec = new_nsec;
-  } else {
-    ++ts->tv_sec;
-    ts->tv_nsec = new_nsec - 1000000000UL;
-  }
+inline static void add_ticks(hm1k_state *s, unsigned long ticks) {
+  s->ticks += ticks;
 }
 
-/* static void wait_till_target_time(hm1k_state *s) { */
-/*   int n = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, */
-/*                           &s->target_time, NULL); */
-/*   if (n) { */
-/*     fprintf(stderr, "clock_nanosleep: %s\n", strerror(n)); */
-/*   } */
-/* } */
+/** Wait until real time agrees with the number of CPU cycles we
+ * have counted.
+ * This updates s->last_sync to the real time synchronized to, and
+ * s->ticks to the remaining ticks not accounted for.
+ */
+static void sync_time(hm1k_state *s) {
+  if (s->ticks < TIME_STEP_TICKS) return;
+  unsigned long new_nsec = s->last_sync.tv_nsec +
+    (s->ticks / TIME_STEP_TICKS) * TIME_STEP_NS;
+  if (new_nsec > 999999999UL) {
+    s->last_sync.tv_sec += new_nsec / 1000000000UL;
+    new_nsec = new_nsec % 1000000000UL;
+  }
+  s->last_sync.tv_nsec = new_nsec;
+  int n = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME,
+                          &s->last_sync, NULL);
+  if (n) {
+    fprintf(stderr, "clock_nanosleep: %s\n", strerror(n));
+  }
+  s->ticks = s->ticks % TIME_STEP_TICKS;
+}
 
 static void randomize(void *start, size_t len) {
   size_t i;
@@ -300,17 +315,25 @@ static void write_sercr(hm1k_state *s, uint16_t addr, uint8_t val) {
   s->sercr = val;
 }
 
-static uint8_t load_u8(hm1k_state *s, uint16_t addr) {
+static uint8_t load_u8_nosync(hm1k_state *s, uint16_t addr) {
   if (addr < RAM_SIZE) return s->ram[addr];
   if (addr >= ROM_BASE) return s->rom[addr - ROM_BASE];
   return s->io_read[addr & 0x0fff](s, addr);
 }
 
+static uint8_t load_u8(hm1k_state *s, uint16_t addr) {
+  sync_time(s);
+  return load_u8_nosync(s, addr);
+}
+
 static uint16_t load_u16(hm1k_state *s, uint16_t addr) {
-  return (uint16_t) load_u8(s, addr) | (uint16_t) load_u8(s, addr + 1) << 8;
+  sync_time(s);
+  return (uint16_t) load_u8_nosync(s, addr) |
+    (uint16_t) load_u8_nosync(s, addr + 1) << 8;
 }
 
 static void store_u8(hm1k_state *s, uint16_t addr, uint8_t val) {
+  sync_time(s);
   if (addr < RAM_SIZE) {
     s->ram[addr] = val;
     return;
@@ -319,10 +342,7 @@ static void store_u8(hm1k_state *s, uint16_t addr, uint8_t val) {
 }
 
 static void init_6502(hm1k_state *s, uint8_t *data) {
-  /* s->read_byte = read_byte; */
-  /* s->write_byte = write_byte; */
-  /* clock_gettime(CLOCK_MONOTONIC, &s->target_time); */
-  size_t i;
+ size_t i;
   randomize(s, sizeof(hm1k_state));
   s->ram = data;
   s->cartridge = NULL;
@@ -333,11 +353,13 @@ static void init_6502(hm1k_state *s, uint8_t *data) {
   for (i = 0; i < 0x1000; i++) {
     s->io_write[i] = io_write_default;
   }
+  clock_gettime(CLOCK_MONOTONIC, &s->last_sync);
+  s->ticks = 0;
 }
 
 static void reset(hm1k_state *s) {
-  /* add_ticks(&s->target_time, 7); */
-  /* wait_till_target_time(s); */
+  add_ticks(s, 7);
+  sync_time(s);
   s->a = rand();
   s->p = rand();
   s->s = rand();
@@ -796,6 +818,12 @@ static const hm1k_op ops[256] = {
 };
 #undef OP
 
+#define OP(CODE, NAME, MODE, CYCLES) CYCLES,
+static const unsigned int op_cycles[256] = {
+#include "ops.inc"
+};
+#undef OP
+
 #define OP(CODE, NAME, MODE, CYCLES) #NAME,
 static const char *opnames[256] = {
 #include "ops.inc"
@@ -908,6 +936,7 @@ static void step_6502(hm1k_state *s) {
   // printf("%04x: %02x %02x %02x\n", s->pc, op, load_u8(s, s->pc + 1), load_u8(s, s->pc + 2));
   // disas_modes[op](s->pc, s->ram);
   ++s->pc;
+  add_ticks(s, op_cycles[op]);
   ops[op](s, op);
 }
 
