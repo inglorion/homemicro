@@ -263,6 +263,7 @@ doesn't cause problems.
  - 74HC08 has 23ns propagation delay at 85C.
  - 74AC08 has 8.5ns propagation delay at 85C.
  - 74HC10 has 24ns propagation delay at 85C.
+ - 74AC10 has 8ns propagation delay at 85C.
  - 74HC11 has 25ns propagation delay at 85C.
  - 74HC32 has 23ns propagation delay at 85C.
  - 74AC32 has 8.5ns propagation delay at 85C.
@@ -289,7 +290,10 @@ Making the '32 an AC part, too, gets ram# down to 18ns.
 
 Alternatively, could us an AC245 instead of an HC245. 10.5ns instead
 of 38ns. Increases budget from 31ns to 58ns. But CPU still needs 25ns,
-so more like 31ns to 44ns.
+so more like 31ns to 44ns. Could use AC245 (or 241) to control the
+CPU's bus access, which would give the 10.5ns at the expense of needing
+additional ICs. It would also allow using CPUs without the bus enable
+line. This also works with ACT241, which would take about 11ns.
 
 Faster:
 
@@ -307,6 +311,20 @@ Slower:
  : hiram# = nand rom# hi a12#    (24 + 24 = 48)
  : 
  : ram# = and hi hiram#          (23 + 48 = 71)
+
+Another possibility, which avoids the or gate:
+
+ : rom#: nand a15 a14 a13         (24)
+ : hi_odd#: nand a15 a14 a12      (24)
+ :
+ : ram#: nand rom# hi_odd#        (24 + 24 = 48)
+
+This all works with a single '10, so we can make it all faster by going with an AC10:
+
+ : rom#: nand a15 a14 a13         (8)
+ : hi_odd#: nand a15 a14 a12      (8)
+ :
+ : ram#: nand rom# hi_odd#        (8 + 8 = 16)
 
 * COMMENT Customization for HTML export.
 #+HTML_HEAD: <link rel="stylesheet" type="text/css" href="../style.css" />
