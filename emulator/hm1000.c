@@ -23,6 +23,11 @@
 /// generate their exact nominal frequency either, this should be fine.
 #define TIME_STEP_NS 17879
 
+/// The screen is redrawed every this many nanoseconds.
+/// This is nominally 14593335, but adjusted to match TIME_STEP_NS's
+/// deviation from the nominal value.
+#define REDRAW_NS 14593035
+
 /// Start of memory-mapped I/O.
 #define IO_BASE 0xd000
 
@@ -165,7 +170,7 @@ struct hm1k_state_s {
   hm1k_write_byte_fn io_write[0x1000];
   uint8_t kbdrow, sercr, serir, twi_addr, twi_status;
   uint8_t keyboard[8];
-  struct timespec last_sync;
+  struct timespec last_sync, next_redraw;
   unsigned long ticks;
 };
 
@@ -354,6 +359,7 @@ static void init_6502(hm1k_state *s, uint8_t *data) {
     s->io_write[i] = io_write_default;
   }
   clock_gettime(CLOCK_MONOTONIC, &s->last_sync);
+  s->next_redraw = s->last_sync;
   s->ticks = 0;
 }
 
@@ -1145,7 +1151,6 @@ int main(int argc, char *argv[]) {
   uint8_t ram[RAM_SIZE];
   uint8_t rom[ROM_SIZE];
   bool redraw;
-  unsigned long redraw_ticks;
   xcb_generic_event_t *event;
   xcb_data gui;
 
@@ -1181,15 +1186,18 @@ int main(int argc, char *argv[]) {
   reset(&state);
 
   redraw = true;
-  redraw_ticks = 0;
   for (;;) {
-    if (redraw_ticks <= 1) {
-      redraw = true;
-      redraw_ticks = 100000;
-    } else {
-      --redraw_ticks;
-    }
     step_6502(&state);
+    if (state.last_sync.tv_sec >= state.next_redraw.tv_sec &&
+        (state.last_sync.tv_sec > state.next_redraw.tv_sec ||
+         state.last_sync.tv_nsec > state.next_redraw.tv_nsec)) {
+      redraw = true;
+      state.next_redraw.tv_nsec += REDRAW_NS;
+      if (state.next_redraw.tv_nsec >= 1000000000) {
+        ++state.next_redraw.tv_sec;
+        state.next_redraw.tv_nsec -= 1000000000;
+      }
+    }
     
     event = xcb_poll_for_event(gui.xcb);
     if (!event) {
