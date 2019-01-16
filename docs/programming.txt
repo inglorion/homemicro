@@ -25,6 +25,42 @@
  - ROM:
    - $e000 through $ffff.
 
+* Program Header
+
+At startup, the Home Micro looks for a cartridge to load a program
+from. The program is identified by a header, whose format is given
+below. As is usual for the 6502, values that span multiple bytes are
+stored least significant byte first; for example, $1080 would be
+stored as $80, $10.
+
+| Start | Length | Description                         |
+|-------+--------+-------------------------------------|
+|     0 |      2 | magic "HM"                          |
+|     2 |      2 | version $00, $01                    |
+|     4 |      2 | entry point                         |
+|     6 |      2 | bytes per page                      |
+|     8 |      2 | position of first byte on cartridge |
+|    10 |      2 | number of bytes to load             |
+|    12 |      2 | address at which to load first byte |
+|    14 |      2 | reserved (set to 0)                 |
+
+For example, a header of
+
+: 48 4D
+: 00 01
+: 00 20
+: 20 00
+: 40 00
+: 00 10
+: 00 30
+: 00 00
+
+would cause the ROM to start reading at cartridge address 64 ($0400)
+and load 4096 bytes ($1000) into memory starting at address 768
+($0300). Once done loading, it would jump to address 512 ($0200).  It
+would also store 32 ($0020) in the variable that holds the cartridge
+page size. This value is used when writing to the cartridge.
+
 * Video Modes
 
 | Mode | Bit/Char  |  Pixels | Colors | Tiles |
