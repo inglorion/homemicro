@@ -1217,8 +1217,14 @@ int main(int argc, char *argv[]) {
           (xcb_key_press_event_t*) event;
         unsigned pos = gui.keymap[kpe->detail];
         // printf("key press: %u (%u)\n", kpe->detail, pos);
-        if (pos != 0xff) state.keyboard[pos & 7] &= ~((1 << (pos >> 3)));
-        if (gui.keymap[kpe->detail] == 0) goto leave_event_loop;
+        if (pos != 0xff) {
+          if (kpe->state & XCB_MOD_MASK_1) {
+            // Special handling when mod1 is active.
+            if (pos == KEY_Q) goto leave_event_loop;
+          } else {
+            state.keyboard[pos & 7] &= ~((1 << (pos >> 3)));
+          }
+        }
       }
       break;
     case XCB_KEY_RELEASE:
