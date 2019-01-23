@@ -1,0 +1,233 @@
+#+TITLE: Evolution of a 16-Color Palette
+
+The goal was to create a palette for an 8-bit home computer.
+The palette has 16 colors, which keeps memory requirements reasonable
+and is in line with what many home computers offered,
+as well as PCs until the arrival of VGA.
+Because the idea is to build a computer that can render the palette by hand,
+a simple circuit should be able to generate the colors in the palette.
+
+The screenshots used in this article come from
+[[http://www.mobygames.com/][MobyGames]], a true treasure trove for
+information about video games.
+
+** Saturated RGBI
+
+[[file:rgbi0.png]]
+
+The original idea was an RGBI palette, where red, green, and blue
+each get one bit to indicate whether the primary is present in the
+color, and there is one bit that controls brightness. These colors can
+be generated with 4 resistors and 3 diodes - each color channel gets a
+resistor that translates the logic level to the signal for the bright
+color, and a resistor and a diode that pull the signal level down when
+the intensity bit is off. A similar palette is used by the ZX
+Spectrum. The images resulting from this palette are shown in the top
+row below. All colors are very saturated.
+
+:          +------+
+:  Rin ----|  470 |------------------+----- Rout
+:          +------+                  |
+:                                    |
+:          +------+                  |
+:  Gin ----|  470 |-------------+---------- Gout
+:          +------+             |    |
+:                              \|/   |
+:                               v    |
+:                             <--->  |
+:          +------+             |    |
+:  Bin ----|  470 |--------+--------------- Bout
+:          +------+        |    |    |
+:                         \|/   |   \|/
+:                          v    |    v
+:                        <--->  |  <--->
+:          +------+        |    |    |
+:  Iin ----|  75  |--------+----+----+
+:          +------+
+
+** Less Saturated RGBI
+
+[[file:cga-ntsc.png]]
+
+Another way to implement brightness is to, instead of making R, G,
+and B brighter if they are already present in the color, add some
+value to all of them for the bright colors. In a sense, this generates
+bright colors from dark colors by mixing in some white. This is the
+approach CGA and EGA use. The second row of images shows what this
+looks like. The implementation is similar to the fully saturated
+colors and likewise uses 4 resistors and 3 diodes, but the diodes
+point the other way.
+
+:          +------+
+:  Rin ----|  750 |------------------+----- Rout
+:          +------+                  |
+:                                    |
+:          +------+                  |
+:  Gin ----|  750 |-------------+---------- Gout
+:          +------+             |    |
+:                             <--->  |
+:                               ^    |
+:                             / | \  |
+:                               |    |
+:          +------+             |    |
+:  Bin ----|  750 |--------+--------------- Bout
+:          +------+        |    |    |
+:                        <--->  |  <--->
+:                          ^    |    ^
+:                        / | \  |  / | \
+:          +------+        |    |    |
+:  Iin ----| 1200 |--------+----+----+
+:          +------+
+
+** Simple Support for Brown
+
+[[file:rgbi1.png]]
+
+The major drawback of both basic RGBI schemes is that there is no
+brown. Dark red can be used instead, but that means brown and dark red
+cannot occur in the same image. CGA and EGA contain circuitry that
+convert dark yellow into brown by halving the green signal. This looks
+much more visually pleasing, but at the expense of the additional
+circuitry that matches just one specific color. As an alternative, I
+tried a scheme where the green signal is always reduced, but part of
+the blue channel is added to green. This moves dark yellow more
+towards brown, without affecting bright yellow as much, because bright
+colors are less saturated. Compared to the basic RGBI implementations,
+this requires an additional resistor and diode - not too bad a
+cost. This is the first palette that I was pretty happy with. It is
+shown in the third row in the image.
+
+:          +------+
+:  Rin ----|  750 |------------------+----- Rout
+:          +------+                  |
+:                                    |
+:          +------+                  |
+:  Gin ----| 1200 |---+---------+---------- Gout
+:          +------+   |         |    |
+:                   <--->       |    |
+:                     ^         |    |
+:                   / | \       |    |
+:          +------+   |       <--->  |
+:        +-| 2200 |---+         ^    |
+:        | +------+           / | \  |
+:        |                      |    |
+:        | +------+             |    |
+:  Bin --+-|  750 |--------+--------------- Bout
+:          +------+        |    |    |
+:                        <--->  |  <--->
+:                          ^    |    ^
+:                        / | \  |  / | \
+:          +------+        |    |    |
+:  Iin ----| 1200 |--------+----+----+
+:          +------+
+
+** Better Skin Tones
+
+[[file:rgbi2.png]]
+
+After converting many images to the palette and being happy with
+most of the results, I took a look at what my palette did poorly. One
+thing I was particularly unhappy with was skin tones. They would
+contain too much red, basically making everyone look sunburned. This is
+actually a problem with many existing 16-color palettes, but I
+wondered if I could do better. I tried reducing green some more and
+adding some of the red channel to the green signal. This improved skin
+tones, at the expense of adding yet another resistor and diode. The
+result can be seen in the fourth row in the image.
+
+:          +------+
+:  Rin --+-|  750 |------------------+----- Rout
+:        | +------+                  |
+:        |                           |
+:        | +------+                  |
+:        +-| 5600 |---+              |
+:          +------+   |              |
+:                   \ | /            |
+:                     v              |
+:                   <--->            |
+:          +------+   |              |
+:  Gin ----| 1500 |---+---------+---------- Gout
+:          +------+   |         |    |
+:                   <--->       |    |
+:                     ^         |    |
+:                   / | \       |    |
+:          +------+   |       <--->  |
+:        +-| 2200 |---+         ^    |
+:        | +------+           / | \  |
+:        |                      |    |
+:        | +------+             |    |
+:  Bin --+-|  750 |--------+--------------- Bout
+:          +------+        |    |    |
+:                        <--->  |  <--->
+:                          ^    |    ^
+:                        / | \  |  / | \
+:          +------+        |    |    |
+:  Iin ----| 1200 |--------+----+----+
+:          +------+
+
+** Darker Brown
+
+[[file:rgbi3.png]]
+
+Looking at the images after the skin tone improvement, I wasn't
+quite happy with how bright the brown color was. I decided to try
+something different. Instead of mixing red into green, I just reduced
+the intensity of red, green, and blue, making dark colors darker and
+bright colors less saturated. This approach takes 4 resistors and 4
+diodes and so is actually cheaper to implement than better skin
+tones. I think the skin tones still look acceptable, but brown is now
+darker. The result is shown in the fifth row in the image.
+
+:          +------+
+:  Rin ----| 1000 |------------------+----- Rout
+:          +------+                  |
+:                                    |
+:          +------+                  |
+:  Gin ----| 1500 |---+---------+---------- Gout
+:          +------+   |         |    |
+:                   <--->       |    |
+:                     ^         |    |
+:                   / | \       |    |
+:          +------+   |       <--->  |
+:        +-| 2700 |---+         ^    |
+:        | +------+           / | \  |
+:        |                      |    |
+:        | +------+             |    |
+:  Bin --+-| 1000 |--------+--------------- Bout
+:          +------+        |    |    |
+:                        <--->  |  <--->
+:                          ^    |    ^ 
+:                        / | \  |  / | \
+:          +------+        |    |    |
+:  Iin ----| 1200 |--------+----+----+
+:          +------+
+
+The last row in the image shows the original images, using the
+palette of the computers they were captured from. The first two images
+are EGA, and the last one is Commodore 64 (which has a very different
+palette, not based on RGBI at all).
+
+#+CAPTION: Images of the stages in the evolution of the palette
+[[file:evolution.png]]
+
+** Other Computers
+
+For comparison, here are some screenshots from games running on
+computers popular during the heyday of 8-bit home computers.
+
+Outrun running on the Commodore 64 and ZX Spectrum:
+
+#+CAPTION: Outrun on the Commodore 64 and ZX Spectrum
+[[file:outrun-c64-spectrum.png]]
+
+R-Type on the Commodore 64 and ZX Spectrum:
+
+#+CAPTION: R-Type on the Commodore 64 and ZX Spectrum
+[[file:r-type-c64-spectrum.png]]
+
+California games halfpipe event on Apple II, Commodore 64,
+Nintendo Entertainment System, PC (CGA with RGB monitor), PC
+(CGA with composite monitor), and ZX Spectrum:
+
+#+CAPTION: California Games Halfpipe Event
+[[file:california-games-halfpipe.png]]
