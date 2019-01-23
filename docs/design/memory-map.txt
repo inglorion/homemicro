@@ -325,6 +325,3 @@ This all works with a single '10, so we can make it all faster by going with an 
  : hi_odd#: nand a15 a14 a12      (8)
  :
  : ram#: nand rom# hi_odd#        (8 + 8 = 16)
-
-* COMMENT Customization for HTML export.
-#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="../style.css" />

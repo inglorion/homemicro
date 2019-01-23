@@ -765,14 +765,3 @@ Connect the a0..a7 inputs to the columns of the
 keyboard, and add 100K ohm resistors to pull them up to 5V.
 
 With this, the computer should be able to detect key presses.
-
-* COMMENT Customization for HTML export.
-#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="style.css" />
-#+BEGIN_SRC emacs-lisp :exports none
-  ; To generate HTML
-  (let ((org-html-head-include-scripts nil)
-        (org-html-postamble nil)
-        (org-html-style-include-default nil)
-        (org-html-table-default-attributes '()))
-    (org-html-export-to-html))
-#+END_SRC

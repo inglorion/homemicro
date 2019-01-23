@@ -169,14 +169,3 @@ numbering is
 ** Data Bus
 
 Connect ROM's A0 through A7 to the '245's B0 through B7.
-
-* COMMENT Customization for HTML export.
-#+HTML_HEAD: <link rel="stylesheet" type="text/css" href="../style.css" />
-#+BEGIN_SRC emacs-lisp :exports none
-  ; To generate HTML
-  (let ((org-html-head-include-scripts nil)
-        (org-html-postamble nil)
-        (org-html-style-include-default nil)
-        (org-html-table-default-attributes '()))
-    (org-html-export-to-html))
-#+END_SRC
