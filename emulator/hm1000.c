@@ -291,7 +291,7 @@ static void handle_new_sercr(hm1k_state *s, uint8_t val) {
     /* SCL was high and continues to be high. */
     const uint8_t new_sda = val & SERCR_SDA;
     /* If SDA is unchanged, nothing interesting happens. */
-    if (new_sda == s->sercr & SERCR_SDA) return;
+    if (new_sda == (s->sercr & SERCR_SDA)) return;
     if (new_sda == 0) {
       /* Start condition. */
       /* Address not set, expecting 8 data bits and an ack. */
@@ -1022,8 +1022,10 @@ static void resize(xcb_data *gui,
 static int init_xcb(xcb_data *gui) {
   xcb_screen_iterator_t xcb_screen_iterator;
   const xcb_setup_t *xcb_setup;
+  xcb_keysym_t *keysyms;
+  int i, idx;
   uint32_t values[2];
-  unsigned int width, height, scale;
+  unsigned int width, height;
   xcb_get_keyboard_mapping_cookie_t gkm_cookie;
   xcb_get_keyboard_mapping_reply_t *keyboard_mapping;
 
@@ -1069,8 +1071,8 @@ static int init_xcb(xcb_data *gui) {
 
   memset(gui->keymap, 0xff, 256);
   keyboard_mapping = xcb_get_keyboard_mapping_reply(gui->xcb, gkm_cookie, NULL);
-  xcb_keysym_t *keysyms = xcb_get_keyboard_mapping_keysyms(keyboard_mapping);
-  for (int i = 0, idx = xcb_setup->min_keycode;
+  keysyms = xcb_get_keyboard_mapping_keysyms(keyboard_mapping);
+  for (i = 0, idx = xcb_setup->min_keycode;
        i < xcb_get_keyboard_mapping_keysyms_length(keyboard_mapping);
        i += keyboard_mapping->keysyms_per_keycode, idx++) {
     if (keysyms[i] < 128) {
@@ -1146,7 +1148,6 @@ static void update_display(xcb_data *gui, const uint8_t *ram) {
 
 int main(int argc, char *argv[]) {
   hm1k_state state;
-  int height, scale, width, xpos, ypos;
   uint8_t *cartridge;
   uint8_t ram[RAM_SIZE];
   uint8_t rom[ROM_SIZE];
