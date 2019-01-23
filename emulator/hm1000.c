@@ -209,15 +209,6 @@ static void randomize(void *start, size_t len) {
   }
 }
 
-static void randomize_registers(hm1k_state *s) {
-  s->a = rand() & 0xff;
-  s->p = rand() & 0xff;
-  s->s = rand() & 0xff;
-  s->x = rand() & 0xff;
-  s->y = rand() & 0xff;
-  s->pc = rand() & 0xffff;
-}
-
 static uint8_t io_read_default(hm1k_state *s, uint16_t addr) {
   fprintf(stderr, "Read from unpopulated I/O address %04x\n", addr);
   return rand();
