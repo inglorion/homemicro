@@ -92,21 +92,21 @@ Wiring
 
 Using '166 to send data:
 
-To shift, we need to set the /ce low and pulse cp high. We need to do
-this when /io5 is low, /we is low, and d7 is low.
+To shift, we need to set the ce# low and pulse cp high. We need to do
+this when io5# is low, we# is low, and d7 is low.
 
-To load, we need to set /ce and /pe low and pulse cp high. We need to
-do this when /io6 is low and /we is low.
+To load, we need to set ce# and pe# low and pulse cp high. We need to
+do this when io6# is low and we# is low.
 
-/pe = or /we /io6
-/ce = and (or d7 /io5 /we)
+pe# = or we# io6#
+ce# = and (or d7 io5# we#)
 
-Note: We use /we rather than /w, because /w has a pull down resistor
-that causes it to be low when the CPU is not driving it. /we is only
+Note: We use we# rather than w#, because w# has a pull down resistor
+that causes it to be low when the CPU is not driving it. we# is only
 low when the CPU is actively writing.
 
 Wire cp to clk3. This will cause the rising edge to occur during the
-time when /ce and /pe can be low.
+time when ce# and pe# can be low.
 
 Wire q7 to the MMC's DI (also known as MOSI).
 
@@ -115,9 +115,9 @@ Using '299 to receive data:
 We need to shift data in on rising sclk. This is provided by q7 of
 the SPI control register.
 
-We need to output data only when /io6 is low and the /oe bus is
-low. Conveniently, the '299 provides /oe1 and /oe2 to accomplish
-this. Connect one to /io6 and the other to the /oe bus.
+We need to output data only when io6# is low and the oe# bus is
+low. Conveniently, the '299 provides oe1# and oe2# to accomplish
+this. Connect one to io6# and the other to the oe# bus.
 
 We will be shifting data from dsr->q0, q0->q1, ..., q6->q7. To do
 this, s0 needs to be pulled high and s1 pulled low. dsl should be

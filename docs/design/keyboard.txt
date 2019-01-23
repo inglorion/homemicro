@@ -136,11 +136,11 @@ low. Columns in which no key is pressed (on the active row) are 1.
  - 8 diodes. 1N4148 works fine.
  - 8 resistors. 100K ohm was used for testing.
 
-Clock the flip-flop when its address is selected and /w is low.
-and clock (nor /w /sel).
+Clock the flip-flop when its address is selected and w# is low.
+and clock (nor w# sel#).
 
-Buffer output is enabled when its address is selected and /oe is low.
-or /oe /sel.
+Buffer output is enabled when its address is selected and oe# is low.
+or oe# sel#.
 
 This allows for a relatively simple to build keyboard. Alternatively,
 the same interface can be implemented by a microcontroller, which can
