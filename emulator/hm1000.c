@@ -682,28 +682,12 @@ OP(php) {
   store_u8(s, 0x100 + s->s--, s->p);
 }
 
-OP(phx) {
-  store_u8(s, 0x100 + s->s--, s->x);
-}
-
-OP(phy) {
-  store_u8(s, 0x100 + s->s--, s->y);
-}
-
 OP(pla) {
   s->a = set_nz(s, load_u8(s, 0x100 + ++s->s));
 }
 
 OP(plp) {
   s->p = load_u8(s, 0x100 + ++s->s) | 0x10;
-}
-
-OP(plx) {
-  s->x = set_nz(s, load_u8(s, 0x100 + ++s->s));
-}
-
-OP(ply) {
-  s->y = set_nz(s, load_u8(s, 0x100 + ++s->s));
 }
 
 static uint8_t rol_impl(hm1k_state *s, uint8_t v) {
@@ -796,17 +780,7 @@ OP(tya) { s->a = set_nz(s, s->y); }
 #define OP(NAME) static void op_ ## NAME (hm1k_state *s, uint8_t op) { \
   op_ni(s, op);                                                        \
 }
-OP(bbr)
-OP(bbs)
 OP(bit)
-OP(bra)
-OP(rmb)
-OP(smb)
-OP(stp)
-OP(stz)
-OP(trb)
-OP(tsb)
-OP(wai)
 #undef OP
 
 #define OP(CODE, NAME, MODE, CYCLES) op_ ## NAME,
