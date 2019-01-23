@@ -1,39 +1,39 @@
 128 characters.
 
-;;; Characters:
-;;; 00 U+2022 bullet
-;;; 01 U+25E2 lower right triangle
-;;; 02 U+25E3 lower left triangle
-;;; 03 U+00A9 copyright sign
-;;; 04 U+2660 spade suit
-;;; 05 U+2661 heart suit
-;;; 06 U+2662 diamond suit
-;;; 07 U+2663 club suit
-;;; 08        brick wall
-;;; 09 U+03A9 capital omega
-;;; 0a U+00D7 multiplication sign
-;;; 0b U+2500 horizontal line
-;;; 0c U+2264 less-than or equal to
-;;; 0d U+2260 not equal to
-;;; 0e U+2265 greater-than or equal to
-;;; 0f U+00F7 division sign
-;;; 10 U+00B0 degree symbol
-;;; 11 U+00B1 plus-minus sign
-;;; 12 U+2514 up and right line
-;;; 13 U+2510 down and left line
-;;; 14 U+250c down and right line
-;;; 15 U+2518 up and left line
-;;; 16 U+251c vertical and right line
-;;; 17 U+252c down and horizontal line
-;;; 18 U+2524 vertical and left line
-;;; 19 U+2534 up and horizontal line
-;;; 1a U+253c vertical and horizontal line
-;;; 1b U+03BC small mu
-;;; 1c U+2191 upwards arrow
-;;; 1d U+2193 downwards arrow
-;;; 1e U+2190 leftwards arrow
-;;; 1f U+2192 rightwards arrow
-;;; 7f U+00A3 pound sign
+** Characters
+ - 00 U+2022 bullet
+ - 01 U+25E2 lower right triangle
+ - 02 U+25E3 lower left triangle
+ - 03 U+00A9 copyright sign
+ - 04 U+2660 spade suit
+ - 05 U+2661 heart suit
+ - 06 U+2662 diamond suit
+ - 07 U+2663 club suit
+ - 08        brick wall
+ - 09 U+03A9 capital omega
+ - 0a U+00D7 multiplication sign
+ - 0b U+2500 horizontal line
+ - 0c U+2264 less-than or equal to
+ - 0d U+2260 not equal to
+ - 0e U+2265 greater-than or equal to
+ - 0f U+00F7 division sign
+ - 10 U+00B0 degree symbol
+ - 11 U+00B1 plus-minus sign
+ - 12 U+2514 up and right line
+ - 13 U+2510 down and left line
+ - 14 U+250c down and right line
+ - 15 U+2518 up and left line
+ - 16 U+251c vertical and right line
+ - 17 U+252c down and horizontal line
+ - 18 U+2524 vertical and left line
+ - 19 U+2534 up and horizontal line
+ - 1a U+253c vertical and horizontal line
+ - 1b U+03BC small mu
+ - 1c U+2191 upwards arrow
+ - 1d U+2193 downwards arrow
+ - 1e U+2190 leftwards arrow
+ - 1f U+2192 rightwards arrow
+ - 7f U+00A3 pound sign
 
 Start with ASCII 32 through 126.
 That leaves 33 codes unassigned.
@@ -52,9 +52,9 @@ or:
 10 lines. 7 left.
 7 matrices. 0 left.
 
-Character classes considered:
+** Character classes considered
 
-Semigraphics:
+*** Semigraphics
 
 In general, semigraphics are not super valuable, because we
 could just use actual graphics - or redefine characters when
@@ -86,7 +86,7 @@ RAM to a custom character set.
 Icons:
  - 4 arrows: up, down, left, right.
 
-Symbols:
+*** Symbols
 
 These seem very valuable. The only caveat is that not all of them
 can be expressed well in the 4x8 wide pixel mode. I will include
@@ -118,12 +118,12 @@ Probably not:
  - Square root.
  - Checkmark.
 
-Accented letters:
+*** Accented letters
 
 I have no current plans to support languages other than English,
 so this doesn't seem super valuable.
 
-Greek letters:
+*** Greek letters
 
 Although not adding the full Greek alphabet, there are a few letters
 which are pretty useful even in non-Greek text:

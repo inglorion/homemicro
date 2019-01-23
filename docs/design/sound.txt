@@ -13,6 +13,7 @@ If we take the clock frequency to be 7.15909 and use 128 clock cycles
 per loop, we get a loop frequency of 55930.3Hz.
 
 | Note |  True f |  Actual |  Div |  Error |
+|------+---------+---------+------+--------|
 | C0   |   16.36 |   16.36 | 3419 |   0.10 |
 | A0   |   27.50 |   27.50 | 2034 |   0.11 |
 | A1   |   55.00 |   55.00 | 1017 |        |

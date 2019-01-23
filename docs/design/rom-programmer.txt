@@ -2,8 +2,6 @@
 
 # -*- truncate-lines: t -*-
 
-TODO: Add protection against '245 driving the data bus when this is not intended.
-
 * Overview
 
 A short summary of the circuit:

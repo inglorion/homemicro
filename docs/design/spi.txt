@@ -155,16 +155,16 @@ high. Since we tied cp to clk3, we need to drive s0 and s1.
 s0 = nor io6# w#
 s1 = or s0 (nor io5# w# d7)
 
-io5# io6# w# d7 s0 s1 action
-0    1    0  0  0  1  shift
-0    1    0  1  0  0  hold
-0    1    1  0  0  0  hold
-0    1    1  1  0  0  hold
-1    0    0  0  1  1  load
-1    0    0  1  1  1  load
-1    0    1  0  0  0  hold
-1    0    1  1  0  0  hold
-1    1    x  x  0  0  hold
+| io5# | io6# | w# | d7 | s0 | s1 | action |
+|    0 |    1 |  0 |  0 |  0 |  1 | shift  |
+|    0 |    1 |  0 |  1 |  0 |  0 | hold   |
+|    0 |    1 |  1 |  0 |  0 |  0 | hold   |
+|    0 |    1 |  1 |  1 |  0 |  0 | hold   |
+|    1 |    0 |  0 |  0 |  1 |  1 | load   |
+|    1 |    0 |  0 |  1 |  1 |  1 | load   |
+|    1 |    0 |  1 |  0 |  0 |  0 | hold   |
+|    1 |    0 |  1 |  1 |  0 |  0 | hold   |
+|    1 |    1 |  x |  x |  0 |  0 | hold   |
 
 (io5# and io6# cannot both be low at the same time, because they are
 outputs of an '138.)

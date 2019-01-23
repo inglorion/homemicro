@@ -1,15 +1,13 @@
-Home Micro 1000
----------------
+* Home Micro 1000
 
 The Home Micro 1000 video circuitry is greatly simplified from that of
 the Home Micro 2000 and provides only a single video mode: 320x200
-pixels in a single color. This corresponds to mode 0 of the Home Micro
-2000. As with the Home Micro 2000, the video is output as a VGA
+pixels in a single color. This corresponds to mode 0 of the Home
+Micro 2000. As with the Home Micro 2000, the video is output as a VGA
 signal.
 
 
-Home Micro 2000
----------------
+* Home Micro 2000
 
 The Home Micro 2000 was designed to generate a VGA signal with up to
 16 colors. VGA was chosen because it is relatively easy to generate,
@@ -24,17 +22,17 @@ the addressable memory. Instead of sacrificing that much address
 space, the Home Micro offers a number of different video modes that
 offer more compact, albeit also less flexible encodings.
 
-Mode    Bit/Char  Pixels  Colors  Tiles
-0       bitmap    320x200 2       no
-1       bitmap    160x200 4       no
-2       bitmap    320x200 2       yes
-3       bitmap    160x200 4       yes
-4       character 320x200 2       no
-5       character 160x200 4       no
-6       character 320x200 2       yes
-7       character 160x200 4       yes
--
-9       character 160x200 16      no
+| Mode | Bit/Char  |  Pixels | Colors | Tiles |
+|    0 | bitmap    | 320x200 |      2 | no    |
+|    1 | bitmap    | 160x200 |      4 | no    |
+|    2 | bitmap    | 320x200 |      2 | yes   |
+|    3 | bitmap    | 160x200 |      4 | yes   |
+|    4 | character | 320x200 |      2 | no    |
+|    5 | character | 160x200 |      4 | no    |
+|    6 | character | 320x200 |      2 | yes   |
+|    7 | character | 160x200 |      4 | yes   |
+|    - |           |         |        |       |
+|    9 | character | 160x200 |     16 | no    |
 
 In other words:
 bit 0: extra color mode (0: disabled, 1: enabled)
