@@ -1021,6 +1021,13 @@ int main(int argc, char *argv[]) {
   
   {
     FILE *f = fopen("rom.bin", "rb");
+    if (!f) {
+      perror("rom.bin");
+      fprintf(stderr,
+              "Could not open rom.bin."
+              " The emulator will not work without it.\n");
+      return 1;
+    }
     fread(rom, 1, ROM_SIZE, f);
     fclose(f);
   }
