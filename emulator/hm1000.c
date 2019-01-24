@@ -1006,7 +1006,6 @@ static void update_display(xcb_data *gui, const uint8_t *ram) {
 
 int main(int argc, char *argv[]) {
   hm1k_state state;
-  uint8_t *cartridge;
   uint8_t ram[RAM_SIZE];
   uint8_t rom[ROM_SIZE];
   bool redraw;
@@ -1025,23 +1024,32 @@ int main(int argc, char *argv[]) {
     fread(rom, 1, ROM_SIZE, f);
     fclose(f);
   }
-  cartridge = malloc(0x20000);
-  memset(cartridge, 0xff, 0x20000);
-  {
-    FILE *f = fopen("cartridge.bin", "rb");
-    fread(cartridge, 1, 0x20000, f);
-    fclose(f);
-  }
   init_6502(&state, ram);
   state.rom = rom;
-  state.cartridge = cartridge;
-  state.cartridge_size = 0x20000;
   state.io_read[SERIR - IO_BASE] = read_serir;
   state.io_write[SERCR - IO_BASE] = write_sercr;
   state.kbdrow = 0;
   memset(state.keyboard, 0xff, sizeof(state.keyboard));
   state.io_read[KBDCOL - IO_BASE] = read_kbdcol;
   state.io_write[KBDROW - IO_BASE] = write_kbdrow;
+  do {
+    FILE *f = fopen("cartridge.bin", "rb");
+    if (!f) break;
+    fseek(f, 0, SEEK_END);
+    state.cartridge_size = ftell(f);
+    rewind(f);
+    state.cartridge = malloc(state.cartridge_size);
+    if (!state.cartridge) {
+      fprintf(stderr,
+              "failed to allocate memory (%lu bytes) for cartridge\n",
+              (unsigned long) state.cartridge_size);
+      perror("malloc");
+      break;
+    }
+    memset(state.cartridge, 0xff, state.cartridge_size);
+    fread(state.cartridge, 1, state.cartridge_size, f);
+    fclose(f);
+  } while (0);
   reset(&state);
 
   redraw = true;
