@@ -16,7 +16,6 @@
 
 static void sleep_ns_impl(unsigned long ns) {
   struct timespec ts;
-  int i;
   ts.tv_sec = ns / 1000000000UL;
   ts.tv_nsec = ns % 1000000000UL;
   nanosleep(&ts, NULL);
@@ -32,8 +31,6 @@ static void sleep_ns(unsigned long ns) {
  *  enable high (which, for those pins, means "disabled").
  */
 static void configure_pins(gpio_t* gpio) {
-  int i;
-  gpio_functions_t functions;
   volatile gpio_functions_t *gfsel = gpio->functions;
   /* Set scl and sda high and vcc low as fast as we can. */
   set_gpio_pin_function(gfsel, VCC_PIN, GPIO_FUNC_OUTPUT);

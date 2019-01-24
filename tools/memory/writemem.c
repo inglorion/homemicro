@@ -57,7 +57,6 @@
 
 static void sleep_ns_impl(unsigned long ns) {
   struct timespec ts;
-  int i;
   ts.tv_sec = ns / 1000000000UL;
   ts.tv_nsec = ns % 1000000000UL;
   nanosleep(&ts, NULL);
@@ -124,14 +123,6 @@ static void enable_chip(gpio_t *gpio) {
   set_gpio_pins_low(gpio, (1 << CHIP_ENABLE_PIN));
 }  
 
-static void disable_writing(gpio_t *gpio) {
-  set_gpio_pins_high(gpio, (1 << WRITE_ENABLE_PIN));
-}
-
-static void enable_writing(gpio_t *gpio) {
-  set_gpio_pins_low(gpio, (1 << WRITE_ENABLE_PIN));
-}
-
 static void set_address(gpio_t *gpio, uint32_t address) {
   set_gpio_pins_low(gpio, (~address & 0x1ffff) << FIRST_ADDRESS_PIN);
   set_gpio_pins_high(gpio, (address & 0x1ffff) << FIRST_ADDRESS_PIN);
@@ -140,15 +131,6 @@ static void set_address(gpio_t *gpio, uint32_t address) {
 static void set_data(gpio_t *gpio, uint8_t data) {
   set_gpio_pins_low(gpio, (~data & 0xff) << FIRST_DATA_PIN);
   set_gpio_pins_high(gpio, data << FIRST_DATA_PIN);
-}
-
-static void set_address_and_data(gpio_t *gpio, uint32_t address, uint8_t data) {
-  set_gpio_pins_low(gpio,
-                    ((~address & 0x1ffff) << FIRST_ADDRESS_PIN) |
-                    ((~data & 0xff) << FIRST_DATA_PIN));
-  set_gpio_pins_high(gpio,
-                     ((address & 0x1ffff) << FIRST_ADDRESS_PIN) |
-                     ((data & 0xff) << FIRST_DATA_PIN));
 }
 
 static uint8_t read_byte(gpio_t *gpio, uint32_t address) {
@@ -183,12 +165,10 @@ static void write_byte(gpio_t *gpio, uint32_t address, uint8_t value) {
 
 int main(int argc, char *argv[]) {
   uint32_t address, address_mod = 0;
-  uint8_t data;
   uint32_t start_address = 0;
   uint32_t end_address = 0x1ff;
   gpio_t gpio;
   gpio_functions_t saved_functions;
-  uint32_t saved_levels;
 
   if (init_gpio(&gpio)) return 1;
   copy_gpio_functions(&saved_functions, gpio.functions);

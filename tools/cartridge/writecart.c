@@ -16,7 +16,6 @@
 
 static void sleep_ns_impl(unsigned long ns) {
   struct timespec ts;
-  int i;
   ts.tv_sec = ns / 1000000000UL;
   ts.tv_nsec = ns % 1000000000UL;
   nanosleep(&ts, NULL);
@@ -32,8 +31,6 @@ static void sleep_ns(unsigned long ns) {
  *  enable high (which, for those pins, means "disabled").
  */
 static void configure_pins(gpio_t* gpio) {
-  int i;
-  gpio_functions_t functions;
   volatile gpio_functions_t *gfsel = gpio->functions;
   /* Set scl and sda high and vcc low as fast as we can. */
   set_gpio_pin_function(gfsel, VCC_PIN, GPIO_FUNC_OUTPUT);
@@ -72,14 +69,6 @@ static uint8_t recv_byte(gpio_t *gpio) {
   return result;
 }
 
-static void send_ack(gpio_t *gpio) {
-  set_gpio_pin_low(gpio, SDA_PIN);
-  sleep_ns(5000);
-  set_gpio_pin_high(gpio, SCL_PIN);
-  sleep_ns(5000);
-  set_gpio_pin_low(gpio, SCL_PIN);
-}
-
 static int send_byte(gpio_t *gpio, uint8_t value) {
   int i;
   for (i = 0; i < 8; i++) {
@@ -112,16 +101,6 @@ static void send_nak(gpio_t *gpio) {
   set_gpio_pin_low(gpio, SCL_PIN);
 }
 
-static void restart(gpio_t *gpio) {
-  set_gpio_pin_high(gpio, SDA_PIN);
-  sleep_ns(8000);
-  set_gpio_pin_high(gpio, SCL_PIN);
-  sleep_ns(8000);
-  set_gpio_pin_low(gpio, SDA_PIN);
-  sleep_ns(8000);
-  set_gpio_pin_low(gpio, SCL_PIN);
-}
-
 static void start(gpio_t *gpio) {
   set_gpio_pin_low(gpio, SDA_PIN);
   sleep_ns(8000);
@@ -141,7 +120,7 @@ int main(int argc, char *argv[]) {
   gpio_t gpio;
   gpio_functions_t saved_functions;
   FILE *input;
-  uint32_t address = 0, address_mod = 0, bytes_to_read, length = ~0;
+  uint32_t address = 0, bytes_to_read, length = ~0;
   /* For 24C32: 32  *
    * For 24C256: 64 */
   const uint32_t page_size = 64;

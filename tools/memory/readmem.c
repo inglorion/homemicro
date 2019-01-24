@@ -58,7 +58,6 @@
 
 static void sleep_ns_impl(unsigned long ns) {
   struct timespec ts;
-  int i;
   ts.tv_sec = ns / 1000000000UL;
   ts.tv_nsec = ns % 1000000000UL;
   nanosleep(&ts, NULL);
@@ -76,17 +75,6 @@ static void configure_data_pins_for_input(gpio_t *gpio) {
   copy_gpio_functions(&functions, gfsel);
   for (i = FIRST_DATA_PIN; i < FIRST_DATA_PIN + 8; i++) {
     set_gpio_pin_function(&functions, i, GPIO_FUNC_INPUT);
-  }
-  copy_gpio_functions(gfsel, &functions);
-}
-
-static void configure_data_pins_for_output(gpio_t *gpio) {
-  int i;
-  gpio_functions_t functions;
-  volatile gpio_functions_t *gfsel = gpio->functions;
-  copy_gpio_functions(&functions, gfsel);
-  for (i = FIRST_DATA_PIN; i < FIRST_DATA_PIN + 8; i++) {
-    set_gpio_pin_function(&functions, i, GPIO_FUNC_OUTPUT);
   }
   copy_gpio_functions(gfsel, &functions);
 }
@@ -125,31 +113,9 @@ static void enable_chip(gpio_t *gpio) {
   set_gpio_pins_low(gpio, (1 << CHIP_ENABLE_PIN));
 }  
 
-static void disable_writing(gpio_t *gpio) {
-  set_gpio_pins_high(gpio, (1 << WRITE_ENABLE_PIN));
-}
-
-static void enable_writing(gpio_t *gpio) {
-  set_gpio_pins_low(gpio, (1 << WRITE_ENABLE_PIN));
-}
-
 static void set_address(gpio_t *gpio, uint32_t address) {
   set_gpio_pins_low(gpio, (~address & 0x1ffff) << FIRST_ADDRESS_PIN);
   set_gpio_pins_high(gpio, (address & 0x1ffff) << FIRST_ADDRESS_PIN);
-}
-
-static void set_data(gpio_t *gpio, uint8_t data) {
-  set_gpio_pins_low(gpio, (~data & 0xff) << FIRST_DATA_PIN);
-  set_gpio_pins_high(gpio, data << FIRST_DATA_PIN);
-}
-
-static void set_address_and_data(gpio_t *gpio, uint32_t address, uint8_t data) {
-  set_gpio_pins_low(gpio,
-                    ((~address & 0x1ffff) << FIRST_ADDRESS_PIN) |
-                    ((~data & 0xff) << FIRST_DATA_PIN));
-  set_gpio_pins_high(gpio,
-                     ((address & 0x1ffff) << FIRST_ADDRESS_PIN) |
-                     ((data & 0xff) << FIRST_DATA_PIN));
 }
 
 static uint8_t read_byte(gpio_t *gpio, uint32_t address) {
@@ -162,34 +128,12 @@ static uint8_t read_byte(gpio_t *gpio, uint32_t address) {
   return (uint8_t) ((*gpio->levels >> FIRST_DATA_PIN) & 0xff);
 }
 
-static void write_byte(gpio_t *gpio, uint32_t address, uint8_t value) {
-  /* ce# and we# must be high during the address transition.
-     oe# must be high so that we can drive the data bus. */
-  set_gpio_pins_high(gpio, (1 << CHIP_ENABLE_PIN) | (1 << WRITE_ENABLE_PIN) | (1 << OUTPUT_ENABLE_PIN));
-  set_address(gpio, address);
-  set_gpio_pin_low(gpio, CHIP_ENABLE_PIN);
-  sleep_ns(ADDRESS_SETUP_NS);
-  /* pull we# low, this latches the address. */
-  set_gpio_pin_low(gpio, WRITE_ENABLE_PIN);
-  sleep_ns(WRITE_ENABLE_TO_DATA_DELAY_NS);
-  configure_data_pins_for_output(gpio);
-  set_data(gpio, value);
-  sleep_ns(WRITE_ENABLE_PULSE_NS);
-  /* pull we# high, this latches the data and performs the write. */
-  set_gpio_pin_high(gpio, WRITE_ENABLE_PIN);
-  /* wait for the write to complete before returning. */
-  sleep_ns(WRITE_DELAY_NS);
-  configure_data_pins_for_input(gpio);
-}
-
 int main(int argc, char *argv[]) {
   uint32_t address, address_mod = 0;
-  uint8_t data;
   uint32_t start_address = 0, length = 0x200;
   uint32_t end_address;
   gpio_t gpio;
   gpio_functions_t saved_functions;
-  uint32_t saved_levels;
 
   if (argc > 1) start_address = atol(argv[1]);
   if (argc > 2) length = atol(argv[2]);

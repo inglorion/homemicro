@@ -169,7 +169,7 @@ void set_gpio_pin_function(
   size_t word_offset = pin / 10;
   size_t bit_offset = (pin % 10) * 3;
   gfsel->registers[word_offset] =
-       gfsel->registers[word_offset] & ~(7 << bit_offset) | (function << bit_offset);
+    (gfsel->registers[word_offset] & ~(7 << bit_offset)) | (function << bit_offset);
 }
 
 /**
