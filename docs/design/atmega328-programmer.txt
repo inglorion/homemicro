@@ -1,0 +1,158 @@
+* Circuit
+
+:                  /-----------------\
+:                  |                 |
+:                  |   /-------------|---\
+:                  |   |             |   |
+:                  |   | |-ATmega--| |   |
+:                  |   \-|  1   28 | |   |
+:          R1      |     |  2   27 | |   |
+:   /---\/\/\/\/---+     |  3   26 | |   |
+:   |              |     |  4   25 | |   |    /    |--RPi GPIO--|
+:   | |-Osc-----|  |     |  5   24 | +---|---/  ---| 3.3V |  5V |
+:   \-| E   Vcc |--+     |  6   23 | |   |         |    2 |  5V |
+:     |         |  \-----|  7   22 |-|-\ |         |    3 | GND |
+:     |         |      /-|  8   21 |-+ | \---------|    4 |  14 |
+:   /-| GND OUT |------|-|  9   20 |-/ |           |  GND |  15 |
+:   |                  | | 10   19 |---|-----------|   17 |  18 |
+:   |                  | | 11   18 |---|-----------|   27 | GND |
+:   |                  | | 12   17 |---|-----------|   22 |  23 |
+:   |                  | | 13   16 |   |           | 3.3V |  24 |
+:   |                  | | 14   15 |   |           |   10 | GND |
+:   |                  |               |           |    9 |  25 |
+:   |                  |               |           |   11 |   8 |
+:   \------------------+---------------+-----------|  GND |   7 |
+:                                                  |------+-----|
+:                                                  |    0 |   1 |
+:                                                  |    5 | GND |
+:                                                  |    6 |  12 |
+:                                                  |   13 | GND |
+:                                                  |   19 |  16 |
+:                                                  |   26 |  20 |
+:                                                  |  GND |  21 |
+
+
+* Operation
+
+ - The circuit operates at 3.3V, provided by the Raspberry Pi.
+
+ - Power is provided by one of the Raspberry Pi's 3.3V pins. There
+   is a switch which allows cutting off the power to the ATmega and
+   the oscillator.
+
+ - The oscillator should have a frequency of 10MHz or less. This
+   allows the ATmega to operate at 3.3V.
+
+ - Check your oscillator's datasheet for the correct wiring. Common
+   variations are needing pin 1 to be high or needing pin 1 to be left
+   unconnected. The circuit diagram here shows pin 1 pulled high with
+   pull-up resistor R1. The value of R1 is not very critical; I like
+   to use 10K ohm, but any lower value should work, too, including
+   wiring to Vcc directly - provided your oscillator actually needs the
+   pin to be high.
+
+ - The oscillator's output is connected to ATmega pin 9 (XTAL1).
+   This allows the programming circuit to function even when the
+   ATmega is configured to use an external clock source.
+
+ - The ATmega is programmed using a serial protocol. It uses three
+   signals: SCK (clock), MISO (data from the ATmega to the programmer),
+   and MOSI (data from the programmer to the ATmega).
+
+ - SCK is provided by GPIO17 of the Raspberry Pi and connected to
+   pin 19 of the ATmega.
+
+ - MISO is provided by GPIO27 of the Raspberry Pi and connected to
+   pin 18 of the ATmega.
+
+ - MOSI is provided by GPIO22 of the Raspberry Pi and connected to
+   pin 17 of the ATmega.
+
+ - The ATmega's reset# pin (pin 1) is held low during programming. This
+   is controlled by GPIO4 of the Raspberry Pi.
+
+* Alternatives to 3.3V Oscillator
+
+The circuit runs at 3.3V, but many oscillator ICs want 5V. If you don't
+have an oscillator that will work at 3.3V, there are several options.
+Note that I have not tested any of these.
+
+If you have an oscillator that runs at 5V, one simple option is to
+power the oscillator using one of the 5V pins on the Raspberry Pi and
+run the oscillator's output through a voltage divider before feeding
+it to the ATmega. Something like
+
+:
+:  5V
+:   |
+:   +---------------\
+:   |               |
+:   >               |
+:   < R             |
+:   > 1             |
+:   <               |
+:   |               |
+:   \---| E   Vcc |-/
+:       |         |
+:       |         |
+:     /-| GND OUT |----\
+:     |                |
+:     |                >
+:     |                < R
+:     |                > 2
+:     |                <
+:     |                |          to ATmega XTAL1 pin
+:     |                +---------
+:     |                |
+:     |                >
+:     |                < R
+:     |                > 3
+:     |                <
+:     |                |
+:     +----------------/
+:     |
+:  -------
+:    ---
+:     -
+
+To get from 5V to 3.3V, you need R3 to have twice the resistance of
+R2. Of course, resistors do not always have exactly the resistance
+they are rated for. A 10% tolerance is common. At the same time, we
+do not need to get to exactly 3.3V. Let's do some calculations.
+
+From the ATmega328 datasheet, we get that the absolute maximum voltage
+on the XTAL1 pin is Vcc+0.5V. Assuming a 10% tolerance for the supply,
+that means we want to go no higher than 3.3V * 90% + 0.5V = 3.47V. To
+get that from a 5V supply with 10% tolerance, we need R3 / (R2 + R3)
+to be at most 3.47 / 5.5, which means actual R2 >= (5.5 - 3.47) * R3 /
+3.47. To account for resistor tolerances, we want rated R2 >= 1.21
+nominal R2. This works out to rated R2/R3 >= 0.71.
+
+On the low side, we need a high signal to be at least 0.6Vcc to be
+recognized as high by an ATmega running at 3.3V. This means we want at
+least 3.3V * 110% * 0.6 = 2.18V. To get that from a 5V signal with 10%
+tolerance, we need R3 / (R2 + R3) to be at least 2.18 / 4.5. Again
+accounting for resistor tolerances, this means we need rated R2/R3 <=
+0.86.
+
+For example, if we pick R3 rated 1.5K ohm and R2 rated 1.2K ohm, we
+can expect an actual voltage between (5V * 0.9) * (1.5 * 0.9) / (1.5 *
+0.9 + 1.2 * 1.1) = 2.28V and (5V * 1.1) * (1.5 * 1.1) / (1.5 * 1.1 +
+1.2 * 0.9) = 3.32V, which is within the tolerances for XTAL1.
+
+(The above calculations ignore the impedance of XTAL1 itself, assuming
+it is much higher than the resistor values being used here.)
+
+Another option would be to use a diode so that current can only flow from
+the ATmega's XTAL1 pin to the oscillator's output and a pull-up resistor
+to 3.3V on the XTAL1 pin. This way, when the oscillator output is low, it
+drives the XTAL1 pin low, and when the output from the oscillator is high,
+the pull-up resistor pulls XTAL1 to 3.3V.
+
+Yet another possibility is to use a 74LVC245 at 3.3V to drive XTAL1, with
+the oscillator's output connected to the '245's 5V-tolerant inputs.
+
+Alternatively, you could build your own oscillator circuit that runs
+at 3.3V. Possibilities here include using a crystal, a resonator, or
+an LC circuit. The frequency on XTAL1 does not have to be very
+precise, so this should work fine.
