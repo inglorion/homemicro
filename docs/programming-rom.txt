@@ -1,0 +1,34 @@
+#+TITLE: Programming the ROM
+
+To build the Home Micro ROM, from the top of the repository:
+
+#+BEGIN_SRC sh
+homemicro$ cd rom
+rom$ make
+#+END_SRC
+
+This will create ~rom.bin~.
+
+If you are using the [[file:design/rom-programmer.txt][ROM Programmer circuit]]
+with a Raspberry Pi, you can use the writerom tool to write the ROM
+image to the ROM chip.
+
+First, the writerom tool has to be built (this only needs to be done
+once - and, of course, if you make changes to the writerom tool).
+Again starting from the top of the repository (use ~cd ..~ first if
+you are in the ROM directory):
+
+#+BEGIN_SRC sh
+homemicro$ cd tools
+tools$ make
+#+END_SRC
+
+To write the ROM image using the writerom tool (from the rom directory):
+
+#+BEGIN_SRC sh
+rom$ sudo ../tools/memory/writerom rom.bin 0 8192
+#+END_SRC
+
+The numbers here indicate the start position and the size of the ROM
+image, respectively.
+

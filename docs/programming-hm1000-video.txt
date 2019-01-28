@@ -1,0 +1,76 @@
+#+TITLE: Programming the HM1000 Video Controller
+
+The HM1000 video controller makes use of an ATmega328P or similar
+microcontroller to generate hsync and vsync signals and video memory
+addresses.
+
+The recommended microcontroller is the Microchip ATmega328P. The
+ATmega328 (without the P) also works.
+
+* Building the Firmware
+
+To build the program that drives the video controller, from the root
+of the repository:
+
+#+BEGIN_SRC sh
+homemicro$ cd vga
+vga$ make
+#+END_SRC
+
+This will create ~vga-m328-ntsc.hex~, which can then be written to the
+ATmega328P.
+
+* AVRDUDE
+
+If you are using the
+[[file:design/atmega328-programmer.txt][ATmega328 programmer circuit]] with a Raspberry Pi, you can write the
+program to the microcontroller using AVRDUDE.
+
+AVRDUDE requires a configuration file. For this example, we assume
+a file named ~/.avrdude.conf with the following contents:
+
+#+BEGIN_SRC
+programmer
+  id    = "m328";
+  desc  = "Use the Linux sysfs interface to bitbang GPIO lines";
+  type  = "linuxgpio";
+  reset = 4;
+  sck   = 17;
+  miso  = 27;
+  mosi  = 22;
+;
+#+END_SRC
+
+This tells AVRDUDE to use the Raspberry Pi's GPIO pins, and tells it
+which pins to use for which signals. The numbers correspond to the pin
+numbers used by the
+[[file:design/atmega328-programmer.txt][ATmega328 programmer circuit]].
+
+The following command writes vga-m328-ntsc.hex to the microcontroller:
+
+#+BEGIN_SRC sh
+vga$ sudo avrdude -p m328p -c m328 -C +$HOME/.avrdude.conf -U flash:w:vga-m328-ntsc.hex
+#+END_SRC
+
+Note the + after the -C option.
+
+Here, -p is used to specify the part. "m328p" is AVRDUDE's name for
+the ATmega328P. If you have the non-P version, use "m328" here.
+
+The "-c m328" specifies the programmer id and should match the one in
+your configuration file.
+
+The configuration file is specified with the -C option. The + here
+means to add the configuration to what already exists, instead of
+replacing it.
+
+The -U option specifies the operation to be performed. In this case,
+we will write to the flash memory the contents of vga-m328-nstc.hex.
+
+After the program has been written, we also need to set the fuses on
+the ATmega so that it uses an external clock source and does not
+divide the clock by 8. This is accomplished by the following command:
+
+#+BEGIN_SRC sh
+vga$ sudo avrdude -p m328p -c m328 -C +$HOME/.avrdude.conf -U lfuse:w:0xe0:m
+#+END_SRC

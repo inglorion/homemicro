@@ -1,0 +1,23 @@
+#+TITLE: Writing Cartridges
+
+Writing to cartridges can be done using the
+[[file:design/cartridge-programmer.txt][cartridge programmer circuit]] and a Raspberry Pi.
+
+First, build the writecart tool:
+
+#+BEGIN_SRC sh
+homemicro$ cd tools
+tools$ make
+#+END_SRC
+
+Then, use ~sudo path/to/writecart image_to_write~ to write an image to
+the cartridge.
+
+For example, to build the testkeys app and write it to a cartridge,
+you could use:
+
+#+BEGIN_SRC sh
+homemicro$ cd apps/testkeys
+testkeys$ make
+testkeys$ sudo ../../tools/cartridge/writecart testkeys.bin
+#+END_SRC

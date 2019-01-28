@@ -1,0 +1,50 @@
+#+TITLE: Requirements
+
+* Tools
+
+** Raspberry Pi
+
+A Raspberry Pi computer is recommended to program the various ICs that
+require programming, such as the computer's ROM. The Raspberry Pi's
+GPIO pins give it the flexibility to implement all the necessary
+protocols, and at $35, even the top of the line model is quite
+affordable and may in fact be cheaper than buying dedicated
+programmers for the ICs that go into the Home Micro.
+
+A number of different models of Raspberry Pi are available.  The tools
+and circuits in the Home Micro repository require a Pi with the 40-pin
+GPIO header (which excludes some early models). The following models
+have been tested and are known to work:
+
+ - Raspberry Pi 3 Model B.
+ - Raspberry Pi 2 Model B.
+
+More information about the Raspberry Pi, as well as ways to buy a
+Raspberry Pi, can be found at https://www.raspberrypi.org/
+
+Use of the Raspbian operating system on the Raspberry Pi is recommended.
+
+** Oscilloscope
+
+An oscilloscope is not technically required to build the Home Micro
+computers. It can be an invaluable tool in visualizing what goes on in
+a circuit and to find and fix problems, but good oscilloscopes can
+also be quite pricey. It may be worth the investment if you plan to do
+electronics projects regularly. The signals in the Home Micro get up
+to 14.31818MHz, so to be most useful, an oscilloscope would have to
+work up to frequencies higher than that.
+
+* Software
+
+To build the source code in the repository, you will need the
+following software:
+
+ - make :: to use the Makefiles
+ - C compiler :: for the tools and the emulator
+ - avr-as :: to build the AVR code
+ - xa :: to assemble the 6502 code
+ - xcb :: to build the emulator
+
+On Raspbian, you can install these by running:
+
+ : aptitude install binutils-avr gcc make xa65 libxcb1-dev
