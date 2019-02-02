@@ -13,10 +13,10 @@ If you are using the [[file:design/rom-programmer.txt][ROM Programmer circuit]]
 with a Raspberry Pi, you can use the writerom tool to write the ROM
 image to the ROM chip.
 
-First, the writerom tool has to be built (this only needs to be done
-once - and, of course, if you make changes to the writerom tool).
-Again starting from the top of the repository (use ~cd ..~ first if
-you are in the ROM directory):
+First, the writerom tool has to be built. This only needs to be done
+once, unless you made changes to the writerom tool or get a newer
+version from the repository. Again starting from the top of the
+repository (use ~cd ..~ first if you are in the ROM directory):
 
 #+BEGIN_SRC sh
 homemicro$ cd tools

@@ -13,7 +13,7 @@
  - 1x 74HC139 dual 2-to-4 line decoder/demultiplexer.
  - 2x 74HC161 presettable synchronous 4-bit binary counter.
  - 1x 74HC166 8-bit parallel-in/serial-out shift register.
- - 3x 74HC251 octal buffer/line driver; 3-state.
+ - 3x 74HC541 octal buffer/line driver; 3-state.
  - 1x 74HC299 8-bit universal shift register; tri-state.
  - 1x 74HC574 octal D-type flip-flop; positive edge-trigger; tri-state.
  - 8x 1N4148 small signal diode.

@@ -31,7 +31,7 @@ a file named ~/.avrdude.conf with the following contents:
 
 #+BEGIN_SRC
 programmer
-  id    = "m328";
+  id    = "rpi";
   desc  = "Use the Linux sysfs interface to bitbang GPIO lines";
   type  = "linuxgpio";
   reset = 4;
@@ -49,7 +49,7 @@ numbers used by the
 The following command writes vga-m328-ntsc.hex to the microcontroller:
 
 #+BEGIN_SRC sh
-vga$ sudo avrdude -p m328p -c m328 -C +$HOME/.avrdude.conf -U flash:w:vga-m328-ntsc.hex
+vga$ sudo avrdude -p m328p -c rpi -C +$HOME/.avrdude.conf -U flash:w:vga-m328-ntsc.hex
 #+END_SRC
 
 Note the + after the -C option.
@@ -57,7 +57,7 @@ Note the + after the -C option.
 Here, -p is used to specify the part. "m328p" is AVRDUDE's name for
 the ATmega328P. If you have the non-P version, use "m328" here.
 
-The "-c m328" specifies the programmer id and should match the one in
+The "-c rpi" specifies the programmer id and should match the one in
 your configuration file.
 
 The configuration file is specified with the -C option. The + here
@@ -72,5 +72,5 @@ the ATmega so that it uses an external clock source and does not
 divide the clock by 8. This is accomplished by the following command:
 
 #+BEGIN_SRC sh
-vga$ sudo avrdude -p m328p -c m328 -C +$HOME/.avrdude.conf -U lfuse:w:0xe0:m
+vga$ sudo avrdude -p m328p -c rpi -C +$HOME/.avrdude.conf -U lfuse:w:0xe0:m
 #+END_SRC

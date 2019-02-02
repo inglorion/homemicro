@@ -8,7 +8,7 @@ where:
 1. Arbitrage is not supported. The computer is always bus master.
 
 2. Clock stretching is not supported. Only the computer can drive the
-SCL line.
+   SCL line.
 
 In general, a device that supports I2C fast mode, does not attempt to
 become bus master, and does not stretch the clock should be compatible
@@ -38,4 +38,4 @@ than I2C requires, allowing devices more time to respond.
 | T_VD;DAT | Data valid time               | -    | 0.9  | us   |
 | T_VD;ACK | Data valid acknowledge time   | -    | 0.9  | us   |
 
- * Value is longer than specified for 400kHz I2C.
+ ~*~ Value is longer than specified for 400kHz I2C.
