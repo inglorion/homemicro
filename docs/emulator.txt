@@ -1,0 +1,31 @@
+#+TITLE: The Emulator
+
+The Home Micro source code repository contains an emulator that can be
+used to run programs and firmware written for the Home Micro on other
+computers. The source code for the emulator is in the emulator
+directory of the repository.
+
+To start the emulator, a ROM image file named rom.bin must be present
+in the directory the emulator is run from. In addition, to load a
+program, a file named cartridge.bin must be present in the same
+directory.
+
+The following commands, starting from the top of the Home Micro source
+repository, will create a ROM image and a cartridge image and place
+both in the emulator directory. The emulator will also be built and
+invoked. The require that all the necessary software dependencies are
+present on the system. For more information on those, see
+[[file:requirements.txt]].
+
+#+BEGIN_SRC sh
+homemicro$ cd rom
+rom$ make
+rom$ cp rom.bin ../emulator/
+rom$ cd ../apps/testkeys
+testkeys$ make
+testkeys$ cp testkeys.bin ../../emulator/cartridge.bin
+testkeys$ cd ../../emulator
+emulator$ ./configure
+emulator$ make
+emulator$ ./hm1000
+#+END_SRC
