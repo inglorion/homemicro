@@ -1,6 +1,116 @@
 #+TITLE: Keyboard Design
 
-* Layout
+The Home Micro keyboard interface is designed to accommodate two
+different types of keyboard. One option is a simple keyboard that
+can be build by hand using passive components. This is described in
+further detail under [[Native Keyboard]]. The other option is to
+interface to a PS/2 Keyboard. Such keyboards can be bought
+pre-built. This option is described in more detail under
+[[PS/2 Keyboard]].
+
+* PS/2 Keyboard
+
+The PS/2 keyboard interface was originally introduced with the IBM
+PS/2 series of personal computers. It was widely adopted by other
+computer manufacturers. Although the PC world has largely moved to
+using USB to interface to keyboards, PS/2 keyboards are still
+manufactured and sold.
+
+The PS/2 keyboard protocol is a two-wire serial protocol using a data
+pin and a clock pin, both equipped with pull-up resistors. In addition
+to clock and data, the interface also provides +5V and GND.
+
+** Parts
+
+ - 1x 8-bit flip-flop for the rows. 74HC574.
+ - 1x 8-bit buffer for the columns. 74HCT245.
+ - 1x ATmega328p.
+ - 2x pull-up resistor, 10K ohm.
+
+** Firmware
+
+Firmware that allows the ATmega328p to interface between the PS/2
+keyboard and the Home Micro keyboard interface is in
+[[../../keyboard/ps2kbd-m328.s]]
+
+Using the [[file:atmega328-programmer.txt][ATmega328 Programmer Circuit]]
+it can be built and written to the ATmega using
+
+#+BEGIN_SRC sh
+homemicro$ cd keyboard
+keyboard$ make
+keyboard$ sudo avrdude -p m328p -c rpi -C +$HOME/.avrdude.conf -U flash:w:ps2kbd-m328.hex
+#+END_SRC
+
+In addition to writing the firmware, the fuses must be set so that the
+ATmega runs at a higher clock speed than the default 1MHz. We use the
+clk7 signal from the clock divider to provide a 7.16MHz clock to the
+ATmega's XTAL1 pin. To use this, the low fuse must be set to e0, which
+selects the external clock source and disables the clock division by 8.
+
+#+BEGIN_SRC sh
+keyboard$ sudo avrdude -p m328p -c rpi -C +$HOME/.avrdude.conf -U lfuse:w:0xe0:m
+#+END_SRC
+
+** ATmega328 Wiring
+
+| Pin        | Connection                                     |
+|------------+------------------------------------------------|
+| 1 (reset#) | Vcc                                            |
+| 2 (pd0)    | kbcol0# (pin 2 of the keyboard column buffer)  |
+| 3 (pd1)    | kbcol1# (pin 3 of the keyboard column buffer)  |
+| 4 (pd2)    | kbcol2# (pin 4 of the keyboard column buffer)  |
+| 5 (pd3)    | kbcol3# (pin 5 of the keyboard column buffer)  |
+| 6 (pd4)    | kbcol4# (pin 6 of the keyboard column buffer)  |
+| 7 (vcc)    | Vcc                                            |
+| 8 (gnd)    | GND                                            |
+| 9 (xtal1)  | clk7 (pin 14 of the clock divider)             |
+| 10 (pb7)   | kbdrow6# (pin 13 of the keyboard row register) |
+| 11 (pd5)   | kbcol5# (pin 7 of the keyboard column buffer)  |
+| 12 (pd6)   | kbcol6# (pin 8 of the keyboard column buffer)  |
+| 13 (pd7)   | kbcol7# (pin 9 of the keyboard column buffer)  |
+| 14 (pb0)   | kbdrow0# (pin 19 of the keyboard row register) |
+| 15 (pb1)   | kbdrow1# (pin 18 of the keyboard row register) |
+| 16 (pb2)   | kbdrow2# (pin 17 of the keyboard row register) |
+| 17 (pb3)   | kbdrow3# (pin 16 of the keyboard row register) |
+| 18 (pb4)   | kbdrow4# (pin 15 of the keyboard row register) |
+| 19 (pb5)   | kbdrow5# (pin 14 of the keyboard row register) |
+| 20 (avcc)  | Vcc                                            |
+| 21 (aref)  | Vcc                                            |
+| 22 (gnd)   | GND                                            |
+| 23 (pc0)   | kbdrow7# (pin 12 of the keyboard row register) |
+| 24 (pc1)   | ldkbrow (pin 11 of the keyboard row register)  |
+| 25 (pc2)   | NC                                             |
+| 26 (pc3)   | NC                                             |
+| 27 (pc4)   | /ps2clk/                                       |
+| 28 (pc5)   | /ps2data/                                      |
+
+
+** PS/2 Port
+
+:    /-|___|-\
+:   /         \
+:  /  6 | | 5  \
+:  |    | |    |
+:  | 4       3 |
+:  \           /
+:   \  2   1  /
+:    \-------/
+
+Connections:
+
+| Pin | Name | Connection                                  |
+|-----+------+---------------------------------------------|
+|   1 | DATA | ATmega328 PC5 (pin 28) through 10K resistor |
+|   2 | NC   | no connect                                  |
+|   3 | GND  | Connect to ground                           |
+|   4 | Vcc  | +5V                                         |
+|   5 | CLK  | ATmega328 PC4 (pin 27) through 10K resistor |
+|   6 | NC   | no connect                                  |
+
+* Native Keyboard
+
+** Layout
 
  :  ESC
  :  
@@ -20,11 +130,11 @@
  :                      SP          CTL               LE  DN  RI
  : 
 
-** Comparison
+*** Comparison
 
 By comparison, here are some other home computer keyboard layouts.
 
-*** Atari (57 keys)
+**** Atari (57 keys)
 
  :      !   "   #   $   %   &   '   @   (   )  CLR INS DEL
  : ESC  1   2   3   4   5   6   7   8   9   0   <   >  BS  BRK
@@ -36,7 +146,7 @@ By comparison, here are some other home computer keyboard layouts.
  :     SH     z   x   c   v   b   n   m   ,   .   / ATR SH
  :                         SP
 
-*** Commodore 64 (66 keys)
+**** Commodore 64 (66 keys)
 
  :      !   "   #   $   %   &   '   (   )                  CLR INS    F1
  :  BS  1   2   3   4   5   6   7   8   9   0   +   -  GBP HME DEL    F2
@@ -49,7 +159,7 @@ By comparison, here are some other home computer keyboard layouts.
  :                         SP
 
 
-*** ZX Spectrum (39 keys)
+**** ZX Spectrum (39 keys)
 
  :  1   2   3   4   5   6   7   8   9   0
  :    Q   W   E   R   T   Y   U   I   O   P
@@ -59,7 +169,7 @@ By comparison, here are some other home computer keyboard layouts.
  : CAPS   Z   X   C   V   B   N   M  SYM BRK
  :  SH    z   x   c   v   b   n   m  SH  SP
 
-* Matrix
+** Matrix
 
 +---+-----+-----+---+----+----+----+----+----+
 |   | 0   | 1   | 2 | 3  | 4  | 5  | 6  | 7  |
@@ -82,7 +192,7 @@ By comparison, here are some other home computer keyboard layouts.
 +---+-----+-----+---+----+----+----+----+----+
 
 
-* Ghosting
+** Ghosting
 
 The rows are selected by the byte written to the keyboard row
 register, and the columns are read when the keyboard column register
@@ -130,14 +240,14 @@ whether it actually is or not.
  - UP+LE
  - UP+RI
 
-* Electrical Interface
+** Electrical Interface
 
 The rows are connected so that they are either high impedance or 0.
 The columns are connected through 100K ohm pull-up resistors.
 When a key is pressed when its row its active, it drives its column
 low. Columns in which no key is pressed (on the active row) are 1.
 
-* Parts
+** Parts
 
  - 1x 8-bit flip-flop for the rows. 74HC574.
  - 1x 8-bit buffer for the columns. 74HCT245.
@@ -155,6 +265,45 @@ the same interface can be implemented by a microcontroller, which can
 then speak a different protocol to the actual keyboard; for example,
 the PS/2 keyboard protocol.
 
+
+** Paper Keyboard
+
+The file [[../../keyboard/keys.ps]] is a PostScript document that can
+be used to build a Home Micro compatible keyboard from paper.
+
+Of the 5 pages, the first two show the locations of conductive traces
+that must be made. You can make these using conductive ink, which can
+be bought in pens. Different conductive inks have different levels of
+conductivity. No exhaustive testing has been performed on what level
+of conductivity is required, but, in general, more conductive should
+be better. For the same reason, it may be a good idea to make the
+traces thicker than shown. Although the outlines of the keys are not
+filled in in the printouts, these should be filled with conductive
+ink. When a key is pressed, it makes a connection between a row (on
+page 1) and a column (on page 2). Follow the instructions for the
+conductive ink. It may need several hours to dry.
+
+Wires need to be attached to the traces. Make note of which wire
+connects to which row or column so that they can be wired
+to the computer correctly.
+
+After the pages with traces are two pages with key shapes, but no
+text. The key shapes need to be cut out, so that there are holes where
+the keys are going to be.
+
+The final page contains keys with symbols.
+
+Once the holes have been cut, the traces have been drawn and dried,
+and the wires attached, the layers need to be stacked. Page 2 goes on
+the bottom, with the conductive traces facing up. Pages 3 and 4 go on
+top of page 2, creating some distance from the conductive surfaces and
+insulation between the keys. Page 1 goes on top of those, with the
+conductive surfaces facing down. Finally, page 5 goes on top, with
+the symbols facing up. The end result should be that, for each key,
+there is a symbol facing up, a pad facing down, 2 pages worth of empty
+space, and a pad facing up. When pressing the symbol, the pads should
+connect, creating the electrical connection that allows the computer
+to detect the key press.
 
 * Programming Interface
 

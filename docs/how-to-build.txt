@@ -16,8 +16,6 @@
  - 3x 74HC541 octal buffer/line driver; 3-state.
  - 1x 74HC299 8-bit universal shift register; tri-state.
  - 1x 74HC574 octal D-type flip-flop; positive edge-trigger; tri-state.
- - 8x 1N4148 small signal diode.
- - 8x 100K ohm resistor.
  - 5x 1K ohm resistor.
  - 2x 10K ohm resistor.
  - 1x 100 microfarad capacitor.
@@ -731,11 +729,6 @@ flip-flop, wired as show below:
  | 19 (y0)  | /kbdrow0#/                                  |
  | 20 (vcc) | Vcc                                         |
 
-Each of the ouputs (y0..y7) should be connected to the cathode of a
-diode (1N4148, unless you made substitutions). The cathode of the
-diode is usually marked with a band. The anodes of the diodes will be
-connected to the rows of the keyboard.
-
 Here is the wiring for the keyboard column buffer, a 74HC541:
 
  | Pin       | Connection                              |
@@ -761,7 +754,15 @@ Here is the wiring for the keyboard column buffer, a 74HC541:
  | 19 (oe2#) | oe# (pin 11 of the '08)                 |
  | 20 (vcc)  | Vcc                                     |
 
-Connect the a0..a7 inputs to the columns of the
-keyboard, and add 100K ohm resistors to pull them up to 5V.
+There are two possibilities for connecting the keyboard row register
+and keyboard column buffer to an actual keyboard. The recommended way
+is to use a PS/2 keyboard. Alternatively, you can make your own
+keyboard. Both of these options are described in more detail in the
+[[./design/keyboard.txt][keyboard design document]].
 
-With this, the computer should be able to detect key presses.
+Once the keyboard is connected, the computer should be able to detect
+key presses. You can check this with the testkeys program from the
+source code repository.
+
+If you have made it this far, congratulations! You have built a
+working microcomputer.
