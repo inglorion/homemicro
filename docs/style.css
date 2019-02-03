@@ -17,11 +17,11 @@ h1, h2, h3 {
     margin: 1em 0;
     text-transform: uppercase;
     font-weight: bold;
+    text-align: left;
 }
 
 h1 {
     font-size: 200%;
-    text-align: center;
 }
 
 h2 {
@@ -30,6 +30,13 @@ h2 {
 
 h3 {
     font-size: 100%;
+}
+
+pre.src {
+    background-color: #333333;
+    color: #cccccc;
+    font-size: 80%;
+    padding: 0.5em;
 }
 
 table {
@@ -61,4 +68,8 @@ tr:nth-child(even) {
 
 tr:nth-child(odd) {
     background: #dddddd;
+}
+
+.center {
+    text-align: center;
 }
