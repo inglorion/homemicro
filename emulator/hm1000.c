@@ -8,12 +8,6 @@
 
 #include <errno.h>
 
-// [x] Display graphics.
-// [ ] Handle window close.
-// [ ] Turn instructions into a table.
-// [x] Change timing to ticks. 14.31818 million ticks per second.
-//     This allows simulated time.
-
 /// To avoid spending excessive CPU time on sleep system calls, we
 /// synchronize real time to clock cycles in steps of 32.
 #define TIME_STEP_TICKS 32
