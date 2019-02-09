@@ -542,6 +542,13 @@ OP(beq) {
   if ((s->p & FLAG_Z) != 0) s->pc += off;
 }
 
+OP(bit) {
+  uint8_t val = load_u8(s, modes_a[op & 0x1f](s));
+  s->p &= ~(FLAG_N | FLAG_V | FLAG_Z);
+  s->p |= val & (FLAG_N | FLAG_V);
+  if ((s->a & val) == 0) s->p |= FLAG_Z;
+}
+
 OP(bmi) {
   int8_t off = (int8_t) load_u8(s, mode_imm(s));
   if ((s->p & FLAG_N) != 0) s->pc += off;
@@ -769,12 +776,6 @@ OP(tsx) { s->x = set_nz(s, s->s); }
 OP(txa) { s->a = set_nz(s, s->x); }
 OP(txs) { s->s = s->x; }
 OP(tya) { s->a = set_nz(s, s->y); }
-#undef OP
-
-#define OP(NAME) static void op_ ## NAME (hm1k_state *s, uint8_t op) { \
-  op_ni(s, op);                                                        \
-}
-OP(bit)
 #undef OP
 
 #define OP(CODE, NAME, MODE, CYCLES) op_ ## NAME,
