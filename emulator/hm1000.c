@@ -228,29 +228,45 @@ static void handle_new_sercr(hm1k_state *s, uint8_t val) {
   const bool scl_rising = (s->sercr & SERCR_SCL) == 0;
   if (scl_rising) {
     /* Rising SCL means we're clocking in a bit. */
+    /* Usage of twi_status:
+     *  - We starte the lower 4 bits at 0xf and count down for every
+     *    bit we send or receive.
+     *  - Once the value reaches 7, this means we have sent or received
+     *    8 bits and need to send or receive an acknowledgment.
+     *  - TWI_ADDR_SET indicates that we have received a TWI address.
+     * twi_addr is used to store the address of the TWI device currently
+     * being addressed. It is valid when TWI_ADDR_SET is set in twi_status.
+     * cartridge_addr is used to store the current cartridge address.
+     * It is set by the computer transmitting the bit sequence.
+     * 1010xxx0 yyyyyyyy zzzzzzzz. This is also the sequence that initiates
+     * a write to the cartridge. A read is performed by writing zero
+     * bytes (just to set the address), then sending the sequence
+     * 1010xxx1.
+     */
     const bool addr_set = s->twi_status & TWI_ADDR_SET;
+    const bool cart_write = (s->twi_addr & 0xf1) == 0xa0;
     const bool waiting_for_ack = (s->twi_status & 15) == 7;
     /* Shift incoming bit into serir. We start by setting it to the value
      * of the top bit in sercr, but allow clients to pull it low. */
     s->serir = (s->serir << 1) | (s->sercr >> 7);
     if (waiting_for_ack) {
-      if (s->cartridge && s->twi_addr >> 1 == 0x50) {
+      if (s->cartridge && (s->twi_addr & 0xf0) == 0xa0) {
         if (addr_set) {
           /* Acknowledge address sent to cartridge. */
-          if (s->twi_addr == 0xa0) set_sda_low();
+          if (cart_write) set_sda_low();
         } else  {
           /* Acknowledge cartridge addresses. */
           set_sda_low();
           s->twi_status |= TWI_ADDR_SET;
-          if (s->twi_addr == 0xa0) {
-            s->cartridge_addr = 0;
+          if (cart_write) {
+            s->cartridge_addr = (s->twi_addr >> 1) & 7;
             s->cartridge_bits = 0;
           }
         }
       }
       s->twi_status |= 8;
     } else {
-      if (addr_set && s->twi_addr == 0xa1) {
+      if (addr_set && (s->twi_addr & 0xf1) == 0xa1) {
         static uint8_t data = 0;
         if (s->cartridge_bits == 0) {
           data = s->cartridge[s->cartridge_addr];
@@ -264,7 +280,7 @@ static void handle_new_sercr(hm1k_state *s, uint8_t val) {
       }
       if ((s->twi_status & 7) == 0) {
         if (addr_set) {
-          if (s->twi_addr == 0xa0)
+          if (cart_write)
             s->cartridge_addr = (s->cartridge_addr << 8) | s->serir;
         } else {
           s->twi_addr = s->serir;
