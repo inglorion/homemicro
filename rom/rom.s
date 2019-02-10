@@ -122,7 +122,7 @@ try_cart:
         sta $a7
         lda #$14
         sta $a5
-        jsr cart_load
+        jsr loadcart
         cmp #0
         beq cart_loaded
         dec $c0
@@ -160,7 +160,7 @@ cart_loaded:
         sta $a6
         lda $2a0d
         sta $a7
-        jsr cart_load
+        jsr loadcart
         cmp #0
         bne unloadable_image
         lda #$aa
@@ -175,7 +175,7 @@ unloadable_image:
         sta $2003
         jmp _end
 
-cart_load:
+loadcart:
 ;;; Loads data from a cartridge.
 ;;; In:
 ;;; $a0..$a3  Location of first byte to load.
@@ -187,46 +187,46 @@ cart_load:
         jsr twi_start
         jsr cart_set_location
         cmp #0
-        bne cart_load_done
+        bne loadcart_done
         jsr twi_restart
         cmp #0
-        bne cart_load_done
+        bne loadcart_done
         lda #$a1
         jsr twi_send_byte
         cmp #0
-        bne cart_load_done
+        bne loadcart_done
         dec $a4
-        bne cart_load_loop
+        bne loadcart_loop
         lda $a5
-        beq cart_load_last
-cart_load_loop:
+        beq loadcart_last
+loadcart_loop:
         jsr twi_recv_byte
         ldx #0
         sta ($a6,x)
         jsr twi_ack
         inc $a6
-        bne cart_load_skip_msb
+        bne loadcart_skip_msb
         inc $a7
-cart_load_skip_msb:
+loadcart_skip_msb:
         dec $a4
-        bne cart_load_not_last
+        bne loadcart_not_last
         lda $a5
-        beq cart_load_last
-cart_load_not_last:
+        beq loadcart_last
+loadcart_not_last:
         lda #$ff
         cmp $a4
-        bne cart_load_loop
+        bne loadcart_loop
         dec $a5
-        jmp cart_load_loop
+        jmp loadcart_loop
         
-cart_load_last:
+loadcart_last:
         jsr twi_recv_byte
         ldx #0
         sta ($a6,x)
         jsr twi_nak
         lda #0
 
-cart_load_done:
+loadcart_done:
         tax
         jsr twi_stop
         txa
@@ -241,7 +241,9 @@ cart_set_location:
 ;;; Out:
 ;;; a       0 if successful. Any other value indicates an error.
 ;;; Clobbers x.
-        lda #$a0
+        lda $a2
+        asl
+        ora #$a0
         jsr twi_send_byte
         cmp #0
         bne cart_set_location_done
