@@ -704,7 +704,7 @@ OP(pla) {
 }
 
 OP(plp) {
-  s->p = load_u8(s, 0x100 + ++s->s) | 0x10;
+  s->p = load_u8(s, 0x100 + ++s->s) | 0x20;
 }
 
 static uint8_t rol_impl(hm1k_state *s, uint8_t v) {
