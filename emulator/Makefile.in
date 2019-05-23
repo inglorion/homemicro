@@ -1,5 +1,5 @@
-TARGETS = Makefile hm1000
-OBJECTS = main.o xcb.o
+TARGETS = Makefile hm1000 test_ret1
+OBJECTS = main.o test_ret1.o xcb.o
 
 CFLAGS = @CFLAGS@ @XCB_CFLAGS@
 LIBS = @LIBS@ @XCB_LIBS@
@@ -12,11 +12,17 @@ clean :
 distclean : clean
 	-rm $(TARGETS)
 
-hm1000 : $(OBJECTS)
-	$(CC) $(CFLAGS) -o hm1000 $(OBJECTS) $(LIBS)
+hm1000 : main.o xcb.o
+	$(CC) $(CFLAGS) -o hm1000 main.o xcb.o $(LIBS)
+
+test_ret1 : test_ret1.o
+	$(CC) $(CFLAGS) -o test_ret1 test_ret1.o
 
 main.o : main.c hm1000.c hm1000.h ops.inc xcb.h
 	$(CC) $(CFLAGS) -c main.c
+
+test_ret1.o : test_ret1.c hm1000.c hm1000.h ops.inc
+	$(CC) $(CFLAGS) -c test_ret1.c
 
 xcb.o : xcb.c xcb.h
 	$(CC) $(CFLAGS) -c xcb.c
