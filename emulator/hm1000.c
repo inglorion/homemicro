@@ -1,13 +1,16 @@
 #include "hm1000.h"
 #include "xcb.h"
 
+#include <fcntl.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <errno.h>
 
 /// To avoid spending excessive CPU time on sleep system calls, we
@@ -45,6 +48,10 @@
 
 #define TWI_ADDR_SET 0x10
 #define TWI_BITS_LEFT(X) (X & 7)
+
+#define CART_WAIT_A1 1
+#define CART_WAIT_A2 2
+#define CART_STATE_NORMAL 3
 
 #define FATALF(FMT, ...) { fprintf(stderr, FMT "\n", __VA_ARGS__); exit(1); }
 #define FATAL(MSG) FATALF("%s", MSG)
@@ -94,6 +101,7 @@ struct hm1k_state_s {
   uint16_t pc;
   uint8_t *cartridge;
   uint8_t cartridge_bits;
+  uint8_t cartridge_state;
   size_t cartridge_addr;
   size_t cartridge_size;
   uint8_t *ram;
@@ -164,6 +172,9 @@ static void handle_new_sercr(hm1k_state *s, uint8_t val) {
   if ((val & SERCR_SCL) == 0) return;
 
   const bool scl_rising = (s->sercr & SERCR_SCL) == 0;
+  const bool addr_set = s->twi_status & TWI_ADDR_SET;
+  const bool addressing_cartridge = (s->twi_addr & 0xf0) == 0xa0;
+  const bool twi_addr_even = (s->twi_addr & 1) == 0;
   if (scl_rising) {
     /* Rising SCL means we're clocking in a bit. */
     /* Usage of twi_status:
@@ -188,7 +199,7 @@ static void handle_new_sercr(hm1k_state *s, uint8_t val) {
      * of the top bit in sercr, but allow clients to pull it low. */
     s->serir = (s->serir << 1) | (s->sercr >> 7);
     if (waiting_for_ack) {
-      if (s->cartridge && (s->twi_addr & 0xf0) == 0xa0) {
+      if (s->cartridge && addressing_cartridge) {
         if (addr_set) {
           /* Acknowledge address sent to cartridge. */
           if (cart_write) set_sda_low();
@@ -197,6 +208,7 @@ static void handle_new_sercr(hm1k_state *s, uint8_t val) {
           set_sda_low();
           s->twi_status |= TWI_ADDR_SET;
           if (cart_write) {
+            s->cartridge_state = CART_WAIT_A1;
             s->cartridge_addr = (s->twi_addr >> 1) & 7;
             s->cartridge_bits = 0;
           }
@@ -204,12 +216,13 @@ static void handle_new_sercr(hm1k_state *s, uint8_t val) {
       }
       s->twi_status |= 8;
     } else {
-      if (addr_set && (s->twi_addr & 0xf1) == 0xa1) {
+      if (addr_set && addressing_cartridge && !twi_addr_even) {
         static uint8_t data = 0;
         if (s->cartridge_bits == 0) {
-          data = s->cartridge[s->cartridge_addr];
-          // printf("cartridge %08x: %02x\n", s->cartridge_addr, data);
-          s->cartridge_addr = (s->cartridge_addr + 1) % s->cartridge_size;
+          data = s->cartridge[s->cartridge_addr % s->cartridge_size];
+          /* if (s->pc < 0xc000) */
+          /*   printf("cartridge %08x: %02x\n", s->cartridge_addr, data); */
+          s->cartridge_addr += 1;
           s->cartridge_bits = 8;
         }
         s->serir &= 0xfe | (data >> 7);
@@ -219,7 +232,18 @@ static void handle_new_sercr(hm1k_state *s, uint8_t val) {
       if ((s->twi_status & 7) == 0) {
         if (addr_set) {
           if (cart_write)
-            s->cartridge_addr = (s->cartridge_addr << 8) | s->serir;
+          if (addressing_cartridge && twi_addr_even) {
+            /* printf("to cartridge: %02x\n", s->serir); */
+            if (s->cartridge_state < CART_STATE_NORMAL) {
+              s->cartridge_addr = (s->cartridge_addr << 8) | s->serir;
+              ++s->cartridge_state;
+              /* printf("cartridge_addr: %04x\n", s->cartridge_addr); */
+            } else {
+              /* printf("cartridge[%08x] <- %02x\n", s->cartridge_addr, s->serir); */
+              s->cartridge[s->cartridge_addr % s->cartridge_size] = s->serir;
+              ++s->cartridge_addr;
+            }
+          }
         } else {
           s->twi_addr = s->serir;
         }
@@ -237,6 +261,9 @@ static void handle_new_sercr(hm1k_state *s, uint8_t val) {
       s->twi_status = 15;
     } else {
       /* Stop condition. */
+      if (s->cartridge, addr_set && addressing_cartridge && twi_addr_even) {
+        msync(s->cartridge, s->cartridge_size, MS_ASYNC);
+      }
       s->twi_status = 0;
     }
   }
