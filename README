@@ -35,10 +35,11 @@ To build the code, you will need the following software:
  - avr-as :: to build the AVR code
  - xa :: to assemble the 6502 code
  - xcb :: to build the emulator
+ - pkg-config :: for the emulator's configure script
 
 On Raspbian, you can install these by running:
 
- : aptitude install binutils-avr gcc make xa65 libxcb1-dev
+ : aptitude install binutils-avr gcc make xa65 libxcb1-dev libc6-dev pkg-config
 
 In general, the code can be built by cd'ing into the directory that
 contains the configure script or the Makefile. In case of a configure
