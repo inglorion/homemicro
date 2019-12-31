@@ -13,6 +13,7 @@ typedef struct {
   xcb_gcontext_t gc;
   xcb_pixmap_t pixmap;
   uint8_t keymap[256];
+  uint8_t oldgfx[8000];
 } xcb_data;
 
 void get_window_size(xcb_data *gui,

@@ -139,15 +139,20 @@ void resize(xcb_data *gui,
 }
 
 void update_display(xcb_data *gui, const uint8_t *ram) {
-  unsigned int x, y;
+  unsigned int idx, x, y;
+  uint8_t gfx;
   for (y = 0; y < 200; y++) {
     for (x = 0; x < 40; x++) {
+      idx = (320 * (y >> 3)) + (x << 3) + (y & 7);
+      gfx = ram[0x2000 + idx];
+      if (gui->oldgfx[idx] == gfx) continue;
       xcb_copy_area(gui->xcb, gui->pixmap, gui->win, gui->gc,
                     0,
-                    ram[0x2000 + (320 * (y >> 3)) + (x << 3) + (y & 7)] * gui->scale,
+                    (size_t) gfx * gui->scale,
                     (x << 3) * gui->scale + gui->xoffset,
                     y * gui->scale + gui->yoffset,
                     8 * gui->scale, gui->scale);
+      gui->oldgfx[idx] = gfx;
     }
   }
   xcb_flush(gui->xcb);
