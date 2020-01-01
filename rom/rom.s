@@ -191,6 +191,7 @@ memcheck_done:
         jsr showchr
         lda #$4b
         jsr showchr
+        jsr newline
 
         lda #0
         sta $c0
@@ -208,22 +209,22 @@ try_cart:
         sta $a5
         jsr loadcart
         cmp #0
-        beq cart_loaded
+        beq cloaded
         dec $c0
         bne try_cart
 
-cart_loaded:
+cloaded:
         lda $2a00
         cmp #$48
-        bne unloadable_image
+        bne cartfail
         lda $2a01
         cmp #$4d
-        bne unloadable_image
+        bne cartfail
         lda $2a02
-        bne unloadable_image
+        bne cartfail
         lda $2a03
         cmp #$1
-        bne unloadable_image
+        bne cartfail
 
         lda $2a04
         sta $c0
@@ -246,17 +247,19 @@ cart_loaded:
         sta $a7
         jsr loadcart
         cmp #0
-        bne unloadable_image
+        bne cartfail
         lda #$aa
         sta $2007
         jmp ($c0)
 
-unloadable_image:
-        lda #$80
-        sta $2000
-        sta $2001
-        sta $2002
-        sta $2003
+cartfail:
+        lda #<cartfls
+        sta SHOWADDR
+        lda #>cartfls
+        sta SHOWADDR + 1
+        lda #CARTFLL
+        sta SHOWCTR
+        jsr show
         jmp _end
 
 adjcur:
@@ -1137,6 +1140,8 @@ _end:
         jmp _end
 
 bytess: .byt "bytes"
+cartfls: .byt "Could not load cartridge"
+CARTFLL = * - cartfls
 
 hexits: .byt "0123456789abcdef"
 
