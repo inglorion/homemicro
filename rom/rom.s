@@ -2,6 +2,8 @@
         BUFPTR = $82
         SHOWADDR = $84
         SHOWCTR = $86
+        POLLKEYX = $f8
+        POLLKEYY = $f9
         PUTINTAD = $fa
         PUTINTDG = $fb
         PUTINTPS = $fc
@@ -29,6 +31,33 @@
 
         ;; ROM function jump table.
         jmp cls
+        jmp clshome
+        jmp showchr
+        jmp showspc
+        jmp show
+        jmp showint
+        jmp showuint
+        jmp newline
+        jmp setcur
+        jmp col0
+        jmp scrollup
+        jmp loadcart
+        jmp savecart
+        jmp twistart
+        jmp twistop
+        jmp twiresta
+        jmp twisendb
+        jmp twigetb
+        jmp twiack
+        jmp twinak
+        jmp qkbrow
+        jmp pollkey
+        jmp pollchr
+        jmp waitkey
+        jmp waitchr
+        jmp shchr
+        jmp copy
+        jmp copy8
 
         .dsb FONTBASE-*, $ff
 _charset:
@@ -350,6 +379,13 @@ cls_loop1:
         bcc cls_loop1
         rts
 
+clshome:
+;;; Clears the screen and sets the cursor to 0, 0.
+        jsr cls
+        lda #0
+        tax
+        jmp setcur
+
 cmp16:
 ;;; Compares two 16-bit numbers.
 ;;; In:
@@ -370,6 +406,54 @@ cmp16_eq:
         sbc $a3
         rts
 
+col0:
+;;; Sets the cursor to column 0 on the current line.
+        ;; We find the line the cursor is on by starting at an address
+        ;; corresponding to line 25 (one after the last valid line),
+        ;; then moving up one line at a time until the address becomes
+        ;; less than or equal to the cursor position. There are 320
+        ;; bytes in a line of text; we shift everything right 6 bits
+        ;; so that the size of our lines is 5.
+        ;; Instead of right shifting the cursos position 6 times, we
+        ;; left shift 2 times and use CURPOS + 1.
+        ;; line 3, column 7.
+        ;; 320 * 3 + 8 * 7 = 1016. + 8192 = 9208. $23f8
+        ;; target: 960 + 8192 = 9152. $23c0
+        asl CURPOS
+        rol CURPOS + 1
+        ;; $47dc
+        asl CURPOS
+        rol CURPOS + 1
+        ;; $8fb8
+        ;; Starting position: (#$2000 + (25 * 320)) >> 6: $fd.
+        ;; We actually start 1 below that, to get the effect of a
+        ;; less-or-equal comparison instead of a less-than comparison.
+        lda #$fc
+col0l:
+        cmp CURPOS + 1
+        bcc col0c
+        sbc #5                  ; Carry is set, so this subtracts 5.
+        ;; $8e
+        bcs col0l               ; Always taken.
+col0c:
+        adc #1                  ; Carry is clear, so this adds 1.
+        ;; $8f
+        ;; The new cursor position should be a, shifted left 6 times.
+        ;; Instead, we shift right 2 times.
+        lsr
+        ;; $47
+        ror CURPOS
+        ;; $80
+        lsr
+        ;; $23
+        sta CURPOS + 1
+        lda CURPOS
+        ror
+        ;; $c0
+        and #$c0
+        sta CURPOS
+        rts
+
 copy8:
 ;;; Copies 8 bytes from ($a2,3) to ($a0,1).
 ;;; Clobbers y.
@@ -381,6 +465,105 @@ copy:
         sta ($a0), y
         cpy #0
         bne copy
+        rts
+
+newline:
+        jsr col0
+        lda CURPOS
+        clc
+        adc #$40
+        sta CURPOS
+        lda CURPOS + 1
+        adc #1
+        sta CURPOS + 1
+        jmp adjcur
+
+pollchr:
+;;; Polls the keyboard as per pollkey. If a key press was
+;;; detected, the shift state is used to shift the return
+;;; value as appropriate.
+;;; Out:
+;;; a   character, or 0 if no key press.
+;;; Clobbers: x, y.
+        jsr pollkey
+        beq pollchrd
+        tax
+        lda KBDSTATE + 2
+        and #$80
+        bne pollchrn
+        txa
+        jsr shchr
+        tax
+pollchrn:
+        txa
+pollchrd:
+        rts
+
+pollkey:
+;;; Polls the keyboard for new key presses.
+;;; KBDSTATE is updated to reflect any keys that were
+;;; released.
+;;; If any keys were pressed since the last update
+;;; to KBDSTATE, one key is chosen, it is recorded
+;;; as pressed, and its code is returned.
+;;; Out:
+;;; a   If a keypress was detected, the key code.
+;;;     If no keypress was detected, 0.
+;;; Clobbers x, y.
+        ldy #7
+        lda #$80
+        sta POLLKEYX
+        lda #$7f
+        sta POLLKEYY
+pollkeyl:
+        sta KBDROW
+        nop
+        lda KBDCOL
+        tax
+        ora KBDSTATE, y
+        sta KBDSTATE, y
+        txa
+        eor KBDSTATE, y
+        beq pollkeyn
+        ;; Key pressed.
+        ;; If we already recorded a key, do nothing.
+        ldx POLLKEYX
+        bpl pollkeyn
+        ;; Pick one bit in a that's nonzero.
+        sta POLLKEYX
+        lda #$80
+        ldx #7
+pollkeyb:
+        asl POLLKEYX
+        bcs pollkeyf
+        dex
+        lsr
+        bne pollkeyb
+pollkeyf:
+        ;; Store that bit in POLLKEYX.
+        stx POLLKEYX
+        ;; Flip that bit in KBDSTATE, y.
+        eor KBDSTATE, y
+        sta KBDSTATE, y
+        ;; Encode row in $b1, too.
+        tya
+        asl
+        asl
+        asl
+        ora POLLKEYX
+        sta POLLKEYX
+pollkeyn:
+        sec
+        ror POLLKEYY
+        lda POLLKEYY
+        dey
+        bpl pollkeyl
+        ldy POLLKEYX
+        bpl pollkeym
+        lda #0
+        rts
+pollkeym:
+        lda kbmap, y
         rts
 
 putint:
@@ -505,6 +688,10 @@ qkbrow:
         sta KBDROW
         nop
         lda KBDCOL
+        rts
+
+savecart:
+        ;; TODO: Implement.
         rts
 
 sub16:
@@ -646,6 +833,43 @@ setcur:
         lda #$20
         adc $81
         sta $81
+        rts
+
+shchr:
+;;; Convert unshifted character code to shifted character code.
+;;; For example, 'a' becomes 'A', '1' becomes '!'.
+;;; In:
+;;; a   character code
+;;; Out:
+;;; a   shifted character code
+;;; Clobbers y.
+        cmp #$27
+        beq shchrq
+        cmp #$3d
+        beq shchre
+        cmp #$60
+        beq shchrb
+        cmp #$41
+        bcs shchrl
+        cmp #$21
+        bcs shchry
+        rts
+shchrq:
+        lda #$22
+        rts
+shchre:
+        lda #$2b
+        rts
+shchrb:
+        lda #$7e
+        rts
+shchrl:
+        eor #$20
+        rts
+shchry:
+        and #$0f
+        tay
+        lda shchrt, y
         rts
 
 show:
@@ -899,6 +1123,16 @@ twistop:
         sta SERCR
         rts
 
+waitchr:
+        jsr pollchr
+        beq waitchr
+        rts
+
+waitkey:
+        jsr pollkey
+        beq waitkey
+        rts
+
 _end:
         jmp _end
 
@@ -914,6 +1148,9 @@ kbmap:  .byt $1b,"123456",$00
         .byt "]",$5c,"[pouh",$00
         .byt "'",$0d,"lkijm",$00
         .byt "./;",$1e,$1c,$1d,$1f,$00
+
+shchrt:
+        .byt ")!@#$%",$5e,"&*( :<_>?"
 
 uinttbl: .word 80, 800, 8000, 40000
 
