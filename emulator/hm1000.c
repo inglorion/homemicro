@@ -329,6 +329,26 @@ static void init_6502(hm1k_state *s, uint8_t *data) {
   s->ticks = 0;
 }
 
+static void init_hm1000_cartridge(
+    hm1k_state *s, uint8_t *ram,
+    uint8_t *rom, uint8_t *cartridge, size_t cartridge_size) {
+  init_6502(s, ram);
+  s->rom = rom;
+  s->io_read[SERIR - IO_BASE] = read_serir;
+  s->io_write[SERCR - IO_BASE] = write_sercr;
+  s->kbdrow = 0;
+  memset(s->keyboard, 0xff, sizeof(s->keyboard));
+  s->io_read[KBDCOL - IO_BASE] = read_kbdcol;
+  s->io_write[KBDROW - IO_BASE] = write_kbdrow;
+  s->cartridge = cartridge;
+  s->cartridge_size = cartridge_size;
+}
+
+static void init_hm1000(
+    hm1k_state *s, uint8_t *ram, uint8_t *rom) {
+  init_hm1000_cartridge(s, ram, rom, NULL, 0);
+}
+
 static void reset(hm1k_state *s) {
   add_ticks(s, 7);
   sync_time(s);
@@ -340,6 +360,27 @@ static void reset(hm1k_state *s) {
   /* b and i are set, rest undefined. */
   s->p |= 0x34;
   s->pc = load_u16(s, 0xfffc);
+}
+
+static void randomize_reset_hm1000(
+    hm1k_state *s, uint8_t *ram, size_t ramsize,
+    uint8_t *rom, size_t romsize, uint16_t reset_addr)
+{
+  randomize(ram, ramsize);
+  randomize(rom, romsize);
+  init_hm1000(s, ram, rom);
+  rom[0x1ffc] = reset_addr & 0xff;
+  rom[0x1ffd] = (reset_addr >> 8) & 0xff;
+  reset(s);
+}
+
+static void push(hm1k_state *s, uint8_t val) {
+  store_u8(s, 0x100 + s->s--, val);
+}
+
+static void push_u16(hm1k_state *s, uint16_t val) {
+  push(s, (val >> 8) & 0xff);
+  push(s, val & 0xff);
 }
 
 static uint8_t set_nz(hm1k_state *s, uint8_t val) {
@@ -618,9 +659,7 @@ OP(jmp) {
 }
 
 OP(jsr) {
-  uint16_t nextpc = s->pc + 1;
-  store_u8(s, 0x100 + s->s--, nextpc >> 8);
-  store_u8(s, 0x100 + s->s--, nextpc & 0xff);
+  push_u16(s, s->pc + 1);
   s->pc = mode_abs(s);
 }
 
@@ -657,11 +696,11 @@ OP(nop) {}
 OP(ora) { s->a = set_nz(s, s->a | load_u8(s, modes_a[op & 0x1f](s))); }
 
 OP(pha) {
-  store_u8(s, 0x100 + s->s--, s->a);
+  push(s, s->a);
 }
 
 OP(php) {
-  store_u8(s, 0x100 + s->s--, s->p);
+  push(s, s->p);
 }
 
 OP(pla) {
