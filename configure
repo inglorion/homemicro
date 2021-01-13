@@ -1,0 +1,155 @@
+#! /bin/sh
+
+detect_xcb() {
+    have_xcb=true
+    xcb_cflags=$(pkg-config --cflags xcb)
+    s=$?
+    if [ $s -ne 0 ]
+    then
+	printf 'Error determining cflags for xcb. Is it installed?\n' >&2
+	have_xcb=false
+	return
+    fi
+
+    xcb_libs=$(pkg-config --libs xcb)
+    s=$?
+    if [ $s -ne 0 ]
+    then
+	printf 'Error determining libs for xcb. Is it installed?\n' >&2
+	have_xcb=false
+    fi
+}
+
+cflags=${CFLAGS:--O3}
+
+detect_xcb
+
+have_xa=true
+xa=xa
+$xa --version | grep -q xa65 || have_xa=false
+
+tools="cartridge/readcart cartridge/writecart gpios_low memory/readmem \
+       memory/writemem memory/writerom"
+
+targets='emulator/test_ret1'
+objects='emulator/test_ret1.o tools/gpio.o'
+
+for tool in $tools
+do
+    targets="$targets tools/$tool"
+done
+
+if [ "$have_xa" = "true" ]
+then
+    targets="$targets rom/rom.bin apps/micrornd/test apps/micrornd/test.bin"
+    for app in donothing emutest micrornd showchars testkeys
+    do
+	targets="$targets apps/$app/$app.bin"
+	objects="$objects apps/micrornd/test.o"
+    done
+fi
+
+if [ "$have_xcb" = "true" ]
+then
+    targets="$targets emulator/hm1000"
+    objects="$objects emulator/main.o emulator/xcb.o"
+fi
+
+cat > Makefile <<EOF
+CFLAGS = $cflags
+
+XA = $xa
+
+TARGETS = $targets
+OBJECTS = $objects
+
+all : \$(TARGETS)
+
+clean :
+	-rm \$(OBJECTS)
+
+distclean : clean
+	-rm \$(TARGETS) Makefile
+
+emulator/test_ret1 : emulator/test_ret1.o
+	\$(CC) \$(CFLAGS) -o emulator/test_ret1 emulator/test_ret1.o
+
+emulator/test_ret1.o : emulator/test_ret1.c emulator/hm1000.c emulator/ops.inc
+	\$(CC) \$(CFLAGS) -c emulator/test_ret1.c -o emulator/test_ret1.o
+
+tools/gpio.o : tools/gpio.c tools/gpio.h
+	\$(CC) \$(CFLAGS) -c tools/gpio.c -o tools/gpio.o
+
+EOF
+
+for tool in $tools
+do
+    cat >>Makefile <<EOF
+tools/$tool : tools/$tool.c tools/gpio.o
+	\$(CC) \$(CFLAGS) tools/$tool.c tools/gpio.o -o tools/$tool
+EOF
+done
+
+if [ "$have_xa" = "true" ]
+then
+    cat >>Makefile <<EOF
+apps/donothing/donothing.bin : apps/donothing/donothing.s
+	\$(XA) -M -bt 768 apps/donothing/donothing.s -o apps/donothing/donothing.bin
+
+apps/micrornd/micrornd.bin : apps/micrornd/micrornd.s apps/micrornd/micrornd_code.inc apps/micrornd/micrornd_data.inc
+	\$(XA) -Iapps/micrornd -M -bt 57344 apps/micrornd/micrornd.s -o apps/micrornd/micrornd.bin
+
+apps/micrornd/test : apps/micrornd/test.o apps/micrornd/test.bin
+	\$(CC) \$(CFLAGS) apps/micrornd/test.o -o apps/micrornd/test
+
+apps/micrornd/test.bin : apps/micrornd/test.s apps/micrornd/micrornd_code.inc apps/micrornd/micrornd_data.inc
+	\$(XA) -Iapps/micrornd -M -bt 1024 apps/micrornd/test.s -o apps/micrornd/test.bin
+
+apps/micrornd/test.o : apps/micrornd/test.c emulator/hm1000.h emulator/hm1000.c
+	\$(CC) \$(CFLAGS) -Iemulator -c apps/micrornd/test.c -o apps/micrornd/test.o
+
+rom/rom.bin : rom/rom.s rom/8x8font.inc
+	\$(XA) -Irom -M -bt 57344 rom/rom.s -o rom/rom.bin
+
+EOF
+
+    for app in emutest showchars testkeys
+    do
+	cat >>Makefile <<EOF
+apps/$app/$app.bin : apps/$app/$app.s
+	\$(XA) -M -bt 57344 apps/$app/$app.s -o apps/$app/$app.bin
+
+EOF
+    done
+fi
+
+if [ "$have_xcb" = "true" ]
+then
+    cat >>Makefile <<EOF
+emulator/hm1000 : emulator/main.o emulator/xcb.o
+	\$(CC) \$(CFLAGS) $xcb_cflags emulator/main.o emulator/xcb.o -o emulator/hm1000 $xcb_libs
+
+emulator/main.o : emulator/main.c emulator/hm1000.c emulator/hm1000.h emulator/ops.inc emulator/xcb.h
+	\$(CC) \$(CFLAGS) $xcb_cflags -c emulator/main.c -o emulator/main.o
+
+emulator/xcb.o : emulator/xcb.c emulator/xcb.h
+	\$(CC) \$(CFLAGS) $xcb_cflags -c emulator/xcb.c -o emulator/xcb.o
+
+EOF
+fi
+
+cat >>Makefile <<EOF
+.PHONY : all clean distclean
+EOF
+
+if [ "$have_xa" != "true" ]
+then
+    echo "6502 assembler not detected. Assembly code cannot be used."
+fi
+
+if [ "$have_xcb" != "true" ]
+then
+    echo "xcb not detected. emulator/hm1000 cannot be built."
+fi
+
+echo "configure done. Type 'make' to build."

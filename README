@@ -41,11 +41,12 @@ On Raspbian, you can install these by running:
 
  : aptitude install binutils-avr gcc make xa65 libxcb1-dev libc6-dev pkg-config
 
-In general, the code can be built by cd'ing into the directory that
-contains the configure script or the Makefile. In case of a configure
-script, you can then run ./configure to create the Makefile. When
-the Makefile is present, you can run make to build the software. make
-clean will remove generated files except the final targets, and make
-distclean will remove all generated files.
+The code can be built from the top-level directory by running:
 
+  $ ./configure
+  $ make
 
+The command "make clean" can be used to remove intermediate files that
+were created during the build, but leave the final build targets in
+place. The command "make distclean" can be used to remove both the
+intermediate files and the final build targets.

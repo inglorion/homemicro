@@ -4,11 +4,6 @@
 
 #define START 0x0400
 
-static void push(hm1k_state *s, uint8_t value) {
-  s->ram[0x100 + s->s] = value;
-  --s->s;
-}
-
 static void push_return_address(hm1k_state *s, uint16_t addr) {
   --addr;
   push(s, addr >> 8);
