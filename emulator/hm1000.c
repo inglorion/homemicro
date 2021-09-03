@@ -261,7 +261,7 @@ static void handle_new_sercr(hm1k_state *s, uint8_t val) {
       s->twi_status = 15;
     } else {
       /* Stop condition. */
-      if (s->cartridge, addr_set && addressing_cartridge && twi_addr_even) {
+      if (s->cartridge && addr_set && addressing_cartridge && twi_addr_even) {
         msync(s->cartridge, s->cartridge_size, MS_ASYNC);
       }
       s->twi_status = 0;
