@@ -75,14 +75,15 @@ int main(int argc, char *argv[]) {
     event = xcb_poll_for_event(gui.xcb);
     if (!event) {
       if (redraw) {
-        update_display(&gui, ram);
+        update_display(&gui, ram, /* force_redraw */ false);
         redraw = false;
       }
       continue;
     }
     switch (event->response_type & ~0x80) {
     case XCB_EXPOSE:
-      redraw = true;
+      update_display(&gui, ram, /* force_redraw */ true);
+      redraw = false;
       break;
     case XCB_KEY_PRESS:
       {
@@ -113,7 +114,8 @@ int main(int argc, char *argv[]) {
         xcb_configure_notify_event_t *cne =
           (xcb_configure_notify_event_t*) event;
         resize(&gui, cne->width, cne->height);
-        redraw = true;
+        update_display(&gui, ram, /* force_redraw */ true);
+        redraw = false;
       }
       break;
     case XCB_CLIENT_MESSAGE:

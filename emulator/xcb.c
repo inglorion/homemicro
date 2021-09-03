@@ -4,6 +4,20 @@
 #include <stdlib.h>
 #include <string.h>
 
+static void clear_rect(xcb_data *gui, xcb_drawable_t drawable,
+                       unsigned int width, unsigned int height) {
+  uint32_t values[1];
+  xcb_rectangle_t rects[1];
+
+  values[0] = gui->screen->black_pixel;
+  xcb_change_gc(gui->xcb, gui->gc, XCB_GC_FOREGROUND, values);
+  rects[0].x = 0;
+  rects[0].y = 0;
+  rects[0].width = width;
+  rects[0].height = height;
+  xcb_poly_fill_rectangle(gui->xcb, drawable, gui->gc, 1, rects);
+}
+
 void get_window_size(xcb_data *gui,
                      unsigned int *width,
                      unsigned int *height) {
@@ -136,16 +150,17 @@ void resize(xcb_data *gui,
   gui->xoffset = (width - scale * 320) / 2;
   gui->yoffset = (height - scale * 200) / 2;
   xcb_generate_pixmap(gui);
+  clear_rect(gui, gui->win, width, height);
 }
 
-void update_display(xcb_data *gui, const uint8_t *ram) {
+void update_display(xcb_data *gui, const uint8_t *ram, bool force_redraw) {
   unsigned int idx, x, y;
   uint8_t gfx;
   for (y = 0; y < 200; y++) {
     for (x = 0; x < 40; x++) {
       idx = (320 * (y >> 3)) + (x << 3) + (y & 7);
       gfx = ram[0x2000 + idx];
-      if (gui->oldgfx[idx] == gfx) continue;
+      if (!force_redraw && gui->oldgfx[idx] == gfx) continue;
       xcb_copy_area(gui->xcb, gui->pixmap, gui->win, gui->gc,
                     0,
                     (size_t) gfx * gui->scale,
@@ -170,13 +185,7 @@ void xcb_generate_pixmap(xcb_data *gui) {
                     gui->scale * 8,
                     gui->scale * 256);
 
-  values[0] = gui->screen->black_pixel;
-  xcb_change_gc(gui->xcb, gui->gc, XCB_GC_FOREGROUND, values);
-  rects[0].x = 0;
-  rects[0].y = 0;
-  rects[0].width = gui->scale * 8;
-  rects[0].height = gui->scale * 256;
-  xcb_poly_fill_rectangle(gui->xcb, gui->pixmap, gui->gc, 1, rects);
+  clear_rect(gui, gui->pixmap, gui->scale * 8, gui->scale * 256);
 
   values[0] = gui->screen->white_pixel;
   xcb_change_gc(gui->xcb, gui->gc, XCB_GC_FOREGROUND, values);

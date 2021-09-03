@@ -1,6 +1,8 @@
 #ifndef HOMEMICRO_EMULATOR_XCB
 #define HOMEMICRO_EMULATOR_XCB
 
+#include <stdbool.h>
+#include <stdint.h>
 #include <xcb/xcb.h>
 
 typedef struct {
@@ -23,7 +25,7 @@ int init_xcb(xcb_data *gui);
 void resize(xcb_data *gui,
             unsigned int width,
             unsigned int height);
-void update_display(xcb_data *gui, const uint8_t *ram);
+void update_display(xcb_data *gui, const uint8_t *ram, bool force_redraw);
 void xcb_generate_pixmap(xcb_data *gui);
 
 #endif /* ndef HOMEMICRO_EMULATOR_XCB */
