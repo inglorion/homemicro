@@ -12,6 +12,7 @@
         SAVEY = $ff
         IRQHNDLR = $0200
         NMIHNDLR = $0204
+        CARTBSZ = $0206
         RAMTOP = $021e
         KBDSTATE = $0220
         BUF = $0240
@@ -694,7 +695,153 @@ qkbrow:
         rts
 
 savecart:
-        ;; TODO: Implement.
+;;; Saves data to a cartridge.
+;;; In:
+;;; $a0..$a3  Location (on cartridge) to save to.
+;;; $a4..$a5  Number of bytes to save.
+;;; $a6..$a7  Address of first byte to save.
+;;; Out:
+;;; a       0 if successful. Any other value indicates an error.
+;;; Clobbers x.
+        ;; We save data in blocks of CARTBSZ bytes.
+        ;; Compute the size of the first. The computation
+        ;; requires that CARTBSZ be a power of 2 and computes
+        ;; the maximum number of bytes that can be written from
+        ;; start without crossing into the next block:
+        ;;
+        ;; start and (CARTBSZ - 1)
+        ;;
+        ;; Then, it sets the size to be written to the minimum of
+        ;; that value and the size that was actually passed in.
+        lda CARTBSZ
+        sec
+        sbc #1
+        and $a0
+        sta $a8
+        lda CARTBSZ + 1
+        sbc #0
+        and $a1
+        sta $a9
+        lda CARTBSZ
+        sec
+        sbc $a8
+        sta $a8
+        lda CARTBSZ + 1
+        sbc $a9
+        sta $a9
+savecart0:
+        lda $a4
+        cmp $a8
+        lda $a5
+        sbc $a9
+        ;; At this point, carry clear means that the number of bytes
+        ;; we were asked to write ($a4..$a5) is less than the number
+        ;; of bytes that fit in the block ($a8..$a9). We set $a8..$a9
+        ;; to the lesser value.
+        bcs savecart1
+        lda $a4
+        sta $a8
+        lda $a5
+        sta $a9
+savecart1:
+        lda $a8
+        sta $aa
+        lda $a9
+        sta $ab
+        jsr saveblk
+        bne savecart2
+        ;; Compute new start address.
+        lda $a0
+        clc
+        adc $aa
+        sta $a0
+        lda $a1
+        adc $ab
+        sta $a1
+        lda $a2
+        adc #0
+        sta $a2
+        lda $a3
+        adc #0
+        sta $a3
+        ;; Compute remaining bytes to write.
+        lda $a4
+        sec
+        sbc $aa
+        sta $a4
+        lda $a5
+        sbc $ab
+        sta $a5
+        ;; If no bytes left to write, we're done.
+        ora $a4
+        beq savecart2
+        ;; Now that we are aligned to a block boundary,
+        ;; write up to CARTBSZ bytes at a time.
+        lda CARTBSZ
+        sta $a8
+        lda CARTBSZ + 1
+        sta $a9
+        jmp savecart0
+savecart2:
+        rts
+
+;;; Saves a single block of data to the cartridge.
+;;; In:
+;;; $a0..$a3  Location (on cartridge) to save to.
+;;; $a6..$a7  Address of first byte to save.
+;;; $a8..$a9  Number of bytes to save.
+;;; Out:
+;;; a       0 if successful. Any other value indicates an error.
+saveblk:
+        jsr cartnext
+        cmp #0
+        bne saveblk2
+saveblk0:
+        ldy #0
+        lda ($a6), y
+        jsr twisendb
+        cmp #0
+        bne saveblk2
+        inc $a6
+        bne saveblk1
+        inc $a7
+saveblk1:
+        dec $a8
+        bne saveblk0
+        lda $a9
+        beq saveblk2
+        dec $a9
+        jmp saveblk0
+saveblk2:
+        tax
+        jsr twistop
+        txa
+        rts
+
+cartnext:
+;;; Waits until the cartridge is ready and sets the
+;;; next address. If more than 10ms elapse and the cartridge
+;;; does not acknowledge the new address, the routine
+;;; returns with the a register set to a nonzero value.
+;;;
+;;; Postconditions:
+;;;  - If a is 0: The cartridge is ready to receive bytes to be
+;;;    written.
+;;;  - Otherwise: The cartridge did not acknowledge the new
+;;;    address.
+;;;
+;;; In:
+;;; $a0..$a3  Cartridge location to set.
+        ldx #$96
+cartnext0:
+        jsr twistop
+        jsr twistart
+        jsr cart_set_location
+        cmp #0
+        beq cartnextd
+        dex
+        bne cartnext0
+cartnextd:
         rts
 
 sub16:
