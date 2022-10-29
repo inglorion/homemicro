@@ -67,7 +67,7 @@
  * encode as 6 | (1 << 3).
  * Codes for which we don't have a key are marked as 0xff.
  */
-const uint8_t key_map[128];
+extern const uint8_t key_map[128];
 
 #endif /* ndef HOMEMICRO_HM1000 */
 
